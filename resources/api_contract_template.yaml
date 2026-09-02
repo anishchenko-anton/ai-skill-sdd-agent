@@ -1,0 +1,142 @@
+openapi: 3.0.3
+info:
+  title: Unified SDD RESTful API Contract
+  version: 1.0.0
+  description: Унифицированный API-контракт модуля по стандартам Spec-Driven Development.
+
+paths:
+  /api/v1/items:
+    get:
+      summary: Получить список элементов
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Успешный ответ со списком элементов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemListResponse'
+        '400':
+          $ref: '#/components/responses/ProblemDetailsError'
+
+    post:
+      summary: Создать новый элемент
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateItemRequest'
+      responses:
+        '201':
+          description: Элемент успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleItemResponse'
+        '422':
+          $ref: '#/components/responses/ProblemDetailsError'
+
+components:
+  schemas:
+    ItemDto:
+      type: object
+      required:
+        - id
+        - name
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Example Item"
+        status:
+          type: string
+          enum: [active, draft, archived]
+
+    CreateItemRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+
+    SingleItemResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ItemDto'
+
+    ItemListResponse:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemDto'
+        meta:
+          type: object
+          required:
+            - page
+            - pageSize
+            - totalCount
+          properties:
+            page:
+              type: integer
+            pageSize:
+              type: integer
+            totalCount:
+              type: integer
+
+  responses:
+    ProblemDetailsError:
+      description: Ошибка по стандарту RFC 7807
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - type
+              - title
+              - status
+              - detail
+            properties:
+              type:
+                type: string
+              title:
+                type: string
+              status:
+                type: integer
+              detail:
+                type: string
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field:
+                      type: string
+                    message:
+                      type: string
