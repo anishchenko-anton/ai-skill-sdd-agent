@@ -1,92 +1,98 @@
-# [Имя проекта]: Концептуальная спецификация (`docs/ABSTRACT.md`)
+# [Project Name]: Conceptual Specification (`docs/ABSTRACT.md`)
 
-> **Назначение документа**: Определение доменной модели, границ контекста (Bounded Contexts), матрицы прав доступа и нерушимых системных инвариантов. Документ служит канонической основой для Фазы 1 (Концептуальный фильтр) SDD-пайплайна.
-
----
-
-## 1. Миссия системы и Bounded Contexts
-
-### 1.1. Главная цель (System Purpose)
-*Краткое описание назначения системы: какую ключевую бизнес- или инженерную задачу она решает, кто ее основные пользователи и какие ключевые результаты ожидаются.*
-
-### 1.2. Границы контекстов (Bounded Contexts)
-*Перечень изолированных функциональных подсистем/модулей проекта и их зоны ответственности:*
-- **[Контекст 1, например: Identity & Auth]**: Регистрация, аутентификация, управление ролями и сессиями.
-- **[Контекст 2, например: Core Domain / Engine]**: Основная бизнес-логика выполнения операций.
-- **[Контекст 3, например: Telemetry & Monitoring]**: Сбор, агрегация и стриминг метрик / логов.
-- **[Контекст 4, например: Hardware / External Gateway]**: Интеграция с физическими устройствами или внешними провайдерами.
+> **Document Purpose**: Establishes the domain model, bounded contexts, permission matrix $P(S, A, R, C)$, and unbreakable system invariants. Serves as the canonical baseline for Phase 1 (Conceptual Filter) of the SDD pipeline.
 
 ---
 
-## 2. Глоссарий и доменные сущности (Entities & Value Objects)
+## 1. System Mission & Bounded Contexts
 
-*Канонические сущности домена. Изменение их состава или семантики требует обновления этого документа.*
+### 1.1. System Purpose
+*A concise description of the system purpose: what core business or engineering problem it solves, primary users, and expected outcomes.*
 
-| Сущность / VO | Тип | Описание | Ключевые атрибуты |
+### 1.2. Bounded Contexts
+*List of decoupled functional subsystems/modules and their respective domains:*
+- **[Context 1, e.g., Identity & Auth]**: Registration, authentication, role and session management.
+- **[Context 2, e.g., Core Engine / Domain]**: Core business operations, scheduling, and execution.
+- **[Context 3, e.g., Telemetry & Streaming]**: Metric aggregation, event broadcasting, and real-time streaming.
+- **[Context 4, e.g., Hardware & External Gateway]**: Physical device drivers, peripherals, and third-party vendor APIs.
+
+---
+
+## 2. Domain Entities & Value Objects
+
+*Canonical domain models. Changes to these entities or their semantics require updating this document.*
+
+| Entity / Value Object | Type | Description | Key Attributes |
 | :--- | :--- | :--- | :--- |
-| `[EntityName]` | Entity | *Что представляет в предметной области* | `id: UUID`, `status: StatusEnum`, `createdAt` |
-| `[ValueObjectName]` | Value Object | *Неизменяемый атрибут-значение (email, координаты, деньги)* | `value: string`, методы валидации |
+| `[EntityName]` | Entity | *Domain representation* | `id: UUID`, `status: StatusEnum`, `createdAt: ISO8601` |
+| `[ValueObjectName]` | Value Object | *Immutable domain value (e.g., Email, Coordinates, Money)* | `value: string`, validation routines |
 
-### Отношения между сущностями
+### Entity Relationships
 ```mermaid
 erDiagram
-    EntityA ||--o{ EntityB : "содержит"
-    EntityB }o--|| EntityC : "ссылается"
+    EntityA ||--o{ EntityB : "contains"
+    EntityB }o--|| EntityC : "references"
 ```
 
 ---
 
-## 3. Матрица субъектов, прав и авторизации $P(S, A, R, C)$
+## 3. Subject, Permission & Authorization Matrix $P(S, A, R, C)$
 
-*Правило разграничения доступа: субъект $S$ выполняет действие $A$ над ресурсом $R$ в контексте условий $C$.*
+*Access control rule: Subject $S$ performs Action $A$ on Resource $R$ under Context conditions $C$.*
 
-### 3.1. Субъекты (Subjects / Actors)
-- **`Guest` / `Anonymous`**: Неавторизованный пользователь.
-- **`User` / `Operator`**: Базовый авторизованный пользователь системы.
-- **`Admin` / `Superuser`**: Администратор с полным доступом к конфигурации.
-- **`System` / `Internal Worker`**: Внутренний системный процесс, демон или воркер.
+### 3.1. Subjects / Actors
+- **`Guest` / `Anonymous`**: Unauthenticated consumer.
+- **`User` / `Operator`**: Authenticated standard consumer or operator.
+- **`Admin` / `Superuser`**: Privileged administrative actor.
+- **`System` / `Internal Worker`**: Background daemon, worker, or scheduler.
 
-### 3.2. Матрица разрешений
+### 3.2. Permission Matrix
 
-| Субъект ($S$) | Ресурс ($R$) | Действие ($A$) | Контекст / Условие ($C$) |
+| Subject ($S$) | Resource ($R$) | Action ($A$) | Context / Condition ($C$) |
 | :--- | :--- | :--- | :--- |
-| `User` | `Device` | `Read` | Только устройства своей организации |
-| `Operator` | `Session` | `Control` | Активная сессия, статус `RUNNING`, отсутствие блокировки |
-| `Admin` | `Configuration` | `Modify` | Всегда при наличии 2FA |
-| `System` | `AuditLog` | `Append` | Автоматически на каждое бизнес-событие |
+| `User` | `Device` | `Read` | Owned devices within assigned tenant |
+| `Operator` | `Session` | `Control` | Active session, status `RUNNING`, no locks |
+| `Admin` | `Configuration` | `Modify` | Always permitted with 2FA |
+| `System` | `AuditLog` | `Append` | Automatically on every domain event |
 
 ---
 
-## 4. Системные инварианты (System Invariants)
+## 4. System Invariants
 
-*Нерушимые правила системы, которые ни при каких условиях не могут быть нарушены кодом.*
+*Unbreakable rules that can never be violated by application code.*
 
 1. **Single Source of Truth (SSOT)**:
-   - *Где находится каноническое состояние?* (Например: база данных PostgreSQL для метаданных; Redis Cluster для активных real-time сессий).
-   - *Запрет на дублирование*: локальные кэши не должны иметь собственного независимого состояния.
+   - *Canonical state repository*: (e.g., PostgreSQL for domain metadata; Redis Cluster for active real-time sessions).
+   - *No split-brain*: Local client caches must never hold independent authority.
 
 2. **Fail-Safe & Graceful Degradation**:
-   - Каково поведение системы при аварии, обрыве сети или отказе сервиса?
-   - (Например: при потере связи с сервером клиент переходит в безопасный режим `READ_ONLY`, исполнительные механизмы глушатся, тайм-ауты сбрасывают блокировки).
+   - System behavior during network partition, timeout, or service crash.
+   - (e.g., Clients transition to safe `READ_ONLY` mode, hardware actuators safely disengage, locks expire).
 
-3. **Concurrency & Exclusive Ownership**:
-   - Правила одновременного доступа к критическим ресурсам.
-   - (Например: монопольное владение управлением сессией `Single Operator Ownership`; распределенный lock через Redis/ETCD с TTL).
+3. **On-Demand Allocation**:
+   - High-throughput telemetry channels, video feeds, and compute-heavy pipelines allocate strictly when active consumers exist.
 
-4. **Audit & Traceability**:
-   - Все мутирующие операции обязаны порождать аудит-событие с идентификатором инициатора (`userId` / `traceId`).
+4. **Device Shadow**:
+   - Cloud/server-side state mirror maintains desired vs reported state for physical devices with intermittent connectivity.
+
+5. **Concurrency & Exclusive Ownership**:
+   - Critical resource concurrency controls.
+   - (e.g., Single-operator lock per device session; distributed Redis/ETCD lease with TTL).
+
+6. **Audit & Traceability**:
+   - All state mutations must generate an audit log record with actor ID (`userId` / `traceId`).
 
 ---
 
-## 5. Стейт-машины ключевых сущностей (Lifecycle State Machines)
+## 5. Lifecycle State Machines
 
 ```mermaid
 stateDiagram-v2
-    [*] --> DRAFT : Создание
-    DRAFT --> ACTIVE : Активация валидирована
-    ACTIVE --> SUSPENDED : Ошибка / Таймаут
-    SUSPENDED --> ACTIVE : Восстановление
-    ACTIVE --> TERMINATED : Завершение
-    SUSPENDED --> TERMINATED : Принудительный сброс
+    [*] --> DRAFT : Create
+    DRAFT --> ACTIVE : Validate & Activate
+    ACTIVE --> SUSPENDED : Timeout / Error
+    SUSPENDED --> ACTIVE : Recover
+    ACTIVE --> TERMINATED : Finalize
+    SUSPENDED --> TERMINATED : Force Reset
     TERMINATED --> [*]
 ```

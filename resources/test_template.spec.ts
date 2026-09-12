@@ -27,8 +27,8 @@ describe('ExampleService (SDD Unit Tests)', () => {
     apiClientSpy = TestBed.inject(ExampleApiClient) as jasmine.SpyObj<ExampleApiClient>;
   });
 
-  describe('Успешный сценарий (Happy Path)', () => {
-    it('должен загружать элемент по ID и обновлять реактивное состояние', (done) => {
+  describe('Happy Path Execution', () => {
+    it('should load item by ID and update reactive state', (done) => {
       // Arrange (Given)
       apiClientSpy.getItemById.and.returnValue(of(mockItem));
 
@@ -43,8 +43,8 @@ describe('ExampleService (SDD Unit Tests)', () => {
     });
   });
 
-  describe('Граничные условия и ошибки (Edge & Error Cases)', () => {
-    it('должен корректно обрабатывать ошибку 404 и выставлять состояние ошибки', (done) => {
+  describe('Edge Conditions & Error Scenarios', () => {
+    it('should handle 404 error and set reactive error state', (done) => {
       // Arrange (Given)
       const errorResponse = { status: 404, message: 'Item not found' };
       apiClientSpy.getItemById.and.returnValue(throwError(() => errorResponse));

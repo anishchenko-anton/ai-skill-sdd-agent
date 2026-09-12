@@ -1,101 +1,97 @@
-# [Имя проекта]: Физическая архитектура и E2E трассировка (`docs/ARCHITECTURE.md`)
+# [Project Name]: Physical Architecture & E2E Tracing (`docs/ARCHITECTURE.md`)
 
-> **Назначение документа**: Фиксация физической топологии, стека технологий, сквозных маршрутов данных (E2E Data Flow) и протоколов взаимодействия. Служит канонической основой для Фазы 2 (Физическая трассировка) SDD-пайплайна.
+> **Document Purpose**: Documents physical topology, technology stack, end-to-end data flows (E2E), and transport protocols. Serves as the canonical baseline for Phase 2 (Physical Tracing) of the SDD pipeline.
 
 ---
 
-## 1. Технологический стек и инфраструктурный профиль
+## 1. Technology Stack & Infrastructure Profile
 
-| Уровень | Технологии / Библиотеки | Назначение в проекте |
+| Tier | Technologies & Frameworks | System Role |
 | :--- | :--- | :--- |
-| **Frontend / Клиент** | *[например: Angular 18 / React 19 / Qt C++]* | Пользовательский интерфейс, представление данных |
-| **API Gateway / Прокси** | *[например: Nginx / Traefik / Envoy / Nest Gateway]* | Маршрутизация, TLS, rate limiting, балансировка |
-| **Backend / Сервисы** | *[например: Node.js NestJS / Python FastAPI / Go]* | Бизнес-логика, оркестрация процессов |
-| **Хранилища данных** | *[например: PostgreSQL 16 + Redis 7]* | Реляционные данные (SSOT) + сессионный кэш |
-| **Шины сообщений / Очереди** | *[например: RabbitMQ / Kafka / NATS / Redis Streams]* | Асинхронные события, межсервисная шина |
-| **Внешние интерфейсы / HW** | *[например: Serial / CAN / Modbus / Vendor REST API]* | Физические контроллеры, периферия, сторонние API |
+| **Frontend / Client** | *[e.g., Angular 18 / React 19 / Qt C++]* | User interface, state presentation |
+| **API Gateway / Ingress** | *[e.g., Nginx / Traefik / Envoy / Nest Gateway]* | Routing, TLS termination, rate limiting, proxy |
+| **Backend Services** | *[e.g., Node.js NestJS / Python FastAPI / Go]* | Domain logic, process orchestration |
+| **Data Stores** | *[e.g., PostgreSQL 16 + Redis 7]* | Relational SSOT + session cache & pub/sub |
+| **Message Broker** | *[e.g., RabbitMQ / Kafka / NATS / Redis Streams]* | Asynchronous inter-service messaging |
+| **Protocols & Hardware** | *[e.g., WSS, WHEP WebRTC, MAVLink, CRSF, Serial]* | Real-time streaming, telemetry, controllers |
 
 ---
 
-## 2. Физическая топология системы (Component Topology)
+## 2. Component Topology
 
 ```mermaid
 graph TD
-    Client[Client / UI] -->|HTTPS / WSS| Gateway[API Gateway / Reverse Proxy]
-    Gateway -->|HTTP Internal| CoreService[Core Backend Service]
-    CoreService -->|SQL| Database[(Relational DB)]
+    Client[Client / UI] -->|HTTPS / WSS / WebRTC| Gateway[API Gateway / Reverse Proxy]
+    Gateway -->|HTTP / Internal RPC| CoreService[Core Backend Service]
+    CoreService -->|SQL| Database[(Relational Database)]
     CoreService -->|Pub/Sub| MessageBroker[Message Broker / Cache]
-    CoreService -->|Custom Protocol / Driver| ExternalNode[External System / Hardware Controller]
+    CoreService -->|Driver Protocol| ExternalNode[Hardware Controller / Edge Device]
 ```
 
 ---
 
-## 3. Сквозная трассировка потоков данных (E2E Data Flow)
+## 3. End-to-End Data Flow (E2E Tracing)
 
-*Описание сквозных маршрутов прохождения запросов от инициатора до точки фиксации/исполнения.*
-
-### 3.1. Основной командный поток (Command / Mutation Flow)
+### 3.1. Command & Mutation Flow
 ```
-[Клиентский UI / Актор]
-  │  1. HTTP POST / PATCH (или WSS Command)
+[Client UI / Actor]
+  │  1. HTTP POST / PATCH (or WSS Command)
   ▼
 [API Gateway / Ingress]
-  │  2. Проверка TLS, rate-limit, проброс заголовков авторизации
+  │  2. TLS verification, rate-limit, auth header forward
   ▼
-[Guards / Interceptors]
-  │  3. Валидация JWT/токена, проверка матрицы прав P(S, A, R, C), валидация схемы DTO
+[Guards & Interceptors]
+  │  3. JWT validation, P(S, A, R, C) policy check, DTO schema validation
   ▼
-[Application Service / Use-Case]
-  │  4. Вызов бизнес-логики, проверка доменных инвариантов
+[Application Service / Use Case]
+  │  4. Business logic execution, domain invariant checks
   ▼
 [Port / Interface]
-  │  5. Вызов через слой абстракции (без прямого хардкода драйвера)
+  │  5. Invocation through abstraction layer
   ▼
-[Adapter / Driver / ORM Repository]
-  │  6. Трансляция вызова в конкретный протокол / SQL-запрос / сетевой пакет
+[Adapter / Driver / Repository]
+  │  6. Translation to protocol packet / SQL query / external payload
   ▼
-[Целевой исполнитель: СУБД / Внешний API / Контроллер]
+[Target Target: Database / Edge Device / External API]
 ```
 
-### 3.2. Поток телеметрии и реального времени (Telemetry / Streaming Flow)
-*Описать, как данные реального времени поступают от источника к потребителю (push/pull, опрос, стриминг, частота дискретизации).*
+### 3.2. Telemetry & Real-Time Streaming Flow
+*Describe real-time data flow from source to consumer (push/pull, polling, streaming, sampling rate).*
 
 ---
 
-## 4. Матрица сетевых протоколов и транспортов проекта
+## 4. Network Protocols & Transports Matrix
 
-*Перечень всех используемых протоколов взаимодействия в проекте:*
-
-| Протокол / Транспорт | Роль в проекте | Формат полезной нагрузки | Сетевой порт / Канал |
+| Protocol / Transport | System Role | Payload Format | Port / Channel |
 | :--- | :--- | :--- | :--- |
-| **HTTP/1.1 or HTTP/2** | REST API (CRUD, управление ресурсами) | JSON (RFC 8259) | `:80`, `:443`, `:3000` |
-| **WebSocket (WSS)** | Двусторонний real-time обмен, уведомления | JSON / Binary frames | `:443/ws`, `:8080` |
-| **[gRPC / Protobuf]** | Высокопроизводительное межсервисное RPC | Binary Protobuf | `:50051` |
-| **[Очередь / Брокер]** | Асинхронные события, фоновые воркеры | Message Envelope (JSON/Proto) | `:5672`, `:9092` |
-| **[Аппаратный протокол]** | Обмен с контроллерами / платами / датчиками | Binary Frame / Hex / Serial | `/dev/ttyUSB0`, UDP `:14550` |
+| **HTTP/1.1 or HTTP/2** | REST API (CRUD, resource lifecycle) | JSON (RFC 8259) | `:80`, `:443`, `:3000` |
+| **WebSocket (WSS)** | Bidirectional real-time messaging, events | JSON / Binary Frames | `:443/ws`, `:8080` |
+| **WebRTC (WHEP/WHIP)** | Low-latency video / media streaming | H.264 / Opus / RTP | UDP `:8554` |
+| **[Message Broker]** | Async task queues, service bus | Message Envelope | `:5672`, `:9092` |
+| **[Hardware Protocol]** | Controller communication (MAVLink, CRSF) | Binary Packet / Serial | `/dev/ttyUSB0`, UDP `:14550` |
 
 ---
 
-## 5. Слой изоляции и абстракции (Decoupling Points)
+## 5. Decoupling & Abstraction Points
 
-*Точки в коде, где конкретная технология скрыта за универсальным интерфейсом (порты и адаптеры):*
+*Code locations where underlying technologies are isolated behind ports and adapters:*
 
-1. **Интерфейс хранилища (`Repository Port`)**:
-   - Интерфейс: `[UserRepositoryPort]`
-   - Текущая реализация: `[PostgresUserRepositoryAdapter]`
-   - Цель: легкая замена на In-Memory в тестах или другую СУБД.
-2. **Интерфейс внешнего протокола/драйвера (`Driver Port`)**:
-   - Интерфейс: `[DeviceCommunicationPort]`
-   - Текущая реализация: `[CustomProtocolDriverAdapter]`
-   - Цель: изоляция сетевого уровня от бизнес-логики сервиса.
+1. **Repository Interface (`Repository Port`)**:
+   - Interface: `[UserRepositoryPort]`
+   - Implementation: `[PostgresUserRepositoryAdapter]`
+   - Objective: Enables in-memory test substitution or database engine migration.
+2. **Driver Interface (`Driver Port`)**:
+   - Interface: `[DeviceCommunicationPort]`
+   - Implementation: `[CustomProtocolDriverAdapter]`
+   - Objective: Insulates business use cases from transport details.
 
 ---
 
-## 6. Точки отказа, отказоустойчивость и таймауты (Failure Modes)
+## 6. Failure Modes, Resiliency & Timeouts
 
-| Точка отказа | Риск / Симптом | Механизм защиты / Восстановления |
+| Failure Mode | Risk & Symptom | Defense & Recovery Mechanism |
 | :--- | :--- | :--- |
-| **Обрыв соединения клиента** | Зависшая сессия, потеря команд | Heartbeat / Ping-Pong таймаут (10с), авто-дисконнект |
-| **Недоступность СУБД / Брокера** | Падение обработчиков | Retry с экспоненциальным backoff, Circuit Breaker |
-| **Таймаут драйвера/устройства** | Блокировка потока | Строгий deadline (3000мс), возврат ошибки по RFC 7807 |
-| **Всплеск нагрузки (Spike)** | Перегрузка памяти | Rate limiting на шлюзе, обратное давление (Backpressure) |
+| **Client Disconnect** | Orphaned session, stalled commands | Heartbeat timeout (10s), auto-disconnect |
+| **DB / Broker Unavailable** | Unhandled request failures | Exponential backoff retry, Circuit Breaker |
+| **Hardware Driver Timeout** | Thread or event loop blockage | Strict deadline (3000ms), return RFC 7807 error |
+| **Traffic Surge** | Memory exhaustion | Ingress rate limiting, backpressure flow control |

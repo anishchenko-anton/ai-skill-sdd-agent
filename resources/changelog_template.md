@@ -1,10 +1,19 @@
-## [Не выпущено / Unreleased]
+## [Unreleased]
 
-### Добавлено (Added)
-- [Название фичи]: Подробное описание новой функциональности.
+### Added
+- [Feature Name]: Detailed description of newly introduced functionality.
 
-### Изменено (Changed)
-- [Компонент/Модуль]: Описание изменений в поведении или структуре.
+### Changed
+- [Component/Module]: Description of behavioral or structural alterations.
 
-### Исправлено (Fixed)
-- [Описание бага]: Описание устраненной первопричины и затронутых сценариев.
+### Deprecated
+- [Feature/API]: Notice of features marked for upcoming removal.
+
+### Removed
+- [Feature/API]: Details of removed legacy functionality.
+
+### Fixed
+- [Bug Description]: Description of eliminated root cause and affected scenarios.
+
+### Security
+- [Vulnerability Description]: Details on addressed security vulnerabilities.

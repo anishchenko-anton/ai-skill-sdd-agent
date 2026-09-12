@@ -1,63 +1,63 @@
-# Фаза 4: Диагностика и устранение первопричин (Root Cause Debugging)
+# Root Cause Diagnostics & Docs-to-Code Reality Check Protocol
 
-Данный регламент определяет строгий порядок исследования дефектов, ошибок, сбоев тестов и непредвиденного поведения.
-
----
-
-## 1. Анализ фактов вместо догадок (Diagnostic First)
-
-1. **Запрет на догадки**: Категорически запрещено выдвигать предположения без фактических доказательств из файлов, логов, стек-трейсов или вывода команд.
-2. **Первое действие — Инспекция**:
-   - Найти точный файл и номер строки, вызвавшие сбой.
-   - Изучить последние изменения (git diff), переменные окружения и полезную нагрузку запросов/ответов.
-   - Если информации недостаточно, добавить диагностические логи для фиксации состояния перед внесением правок.
+This protocol defines the investigation procedure for defects, crashes, failing tests, and unexpected runtime behavior.
 
 ---
 
-## 2. Сверка спецификаций с реальностью (Docs-to-Code Reality Check & Drift)
+## 1. Fact-Based Diagnostics (No Guessing Invariant)
 
-1. **Изучение ожидаемого состояния (Expected State)**:
-   - Агент обязан сначала изучить документацию и спецификации (`.openspec/`, `docs/`, архитектурные схемы), чтобы зафиксировать исходные требования.
-2. **Проверка фактического состояния (Actual State / Fact Check)**:
-   - Проверить реальный исходный код, конфигурации, тесты и логи.
-3. **Детекция расхождения (Drift Detection)**:
-   - Если документация не совпадает с реальным состоянием дел (код изменился или доки устарели), агент **ЗАПРЕЩАЕТСЯ** додумывать или маскировать расхождение.
-   - Агент обязан:
-     1. Явно подсветить расхождение в чате с указанием конкретных файлов и строк.
-     2. Предложить пользователю актуализировать документацию/спецификации (Single Source of Truth).
-     3. Формировать и реализовывать решение исключительно на основе реальной проверки и согласованной спецификации.
+1. **No Guessing**: Guessing or hypothesizing without concrete evidence from log outputs, stack traces, diffs, or terminal execution is strictly prohibited.
+2. **First Action — Direct Inspection**:
+   - Locate the exact file and line number triggering the failure.
+   - Inspect recent changes (`git diff`), environment configuration, and request/response payloads.
+   - If telemetry is insufficient, add targeted diagnostic logs to inspect state before applying modifications.
 
 ---
 
-## 3. Устранение первопричины vs Маскировка симптомов
+## 2. Docs-to-Code Reality Check & Drift Detection
 
-Исправлять структурный или логический дефект в его источнике. Никогда не применять поверхностные «костыли».
+1. **Inspect Expected State**:
+   - Review specifications, architecture docs (`docs/ABSTRACT.md`, `docs/ARCHITECTURE.md`, `.openspec/`), and contracts to understand intended behavior.
+2. **Verify Actual State**:
+   - Inspect active source code, configuration files, test fixtures, and runtime logs.
+3. **Drift Detection**:
+   - If documentation contradicts code reality (code changed or docs decayed), masking or bypassing the drift is strictly prohibited.
+   - The agent MUST:
+     1. Highlight the discrepancy in chat with specific files and line numbers.
+     2. Propose updating the documentation/specification first to maintain Single Source of Truth (SSOT).
+     3. Implement fixes strictly based on verified facts and updated specifications.
 
-| Антипаттерн (Маскировка симптомов) ❌ | Инженерный стандарт (Устранение причины) ✅ |
+---
+
+## 3. Root Cause Resolution vs Symptom Masking
+
+Resolve structural and logical defects at their root source. Never apply superficial workarounds:
+
+| Symptom Masking (Anti-Pattern) ❌ | Root Cause Resolution (Engineering Standard) ✅ |
 | :--- | :--- |
-| Добавление `if (obj != null)` для скрытия неинициализированного состояния | Гарантия корректной инициализации состояния и строгая типизация |
-| Подавление ошибок TypeScript через `as any` или `@ts-ignore` | Корректировка типов DTO, интерфейсов и контрактов данных |
-| Добавление `setTimeout()` для обхода race condition | Использование промисов, RxJS операторов, сигналов или хуков жизненного цикла |
-| Хардкод исключений для падающих краевых значений | Доработка валидации и бизнес-логики для соблюдения доменных инвариантов |
+| Adding `if (obj != null)` to conceal uninitialized state | Guarantee deterministic state initialization and strict typing |
+| Suppressing TypeScript compiler errors via `as any` or `@ts-ignore` | Correct DTO definitions, interfaces, and boundary contracts |
+| Adding `setTimeout()` to bypass race conditions | Leverage promises, RxJS operators, signals, or proper lifecycle hooks |
+| Hardcoding branch exceptions for edge values | Adjust domain validation and invariant enforcement |
 
 ---
 
-## 4. Гарантия регрессионного теста
+## 4. Bug Regression Test Guarantee
 
-Для КАЖДОГО исследованного и исправленного бага:
-1. Написать автоматический тест, воспроизводящий дефект, **ДО или ПАРАЛЛЕЛЬНО** с исправлением.
-2. Убедиться, что тест падает без фикса и проходит с фиксом.
-3. Сохранить тест в тестовом наборе проекта навсегда.
+For EVERY bug investigated and resolved:
+1. Author an automated test reproducing the defect **PRIOR TO or IN PARALLEL WITH** the fix.
+2. Verify the test fails on unfixed code and passes cleanly after the fix.
+3. Commit the regression test permanently to the project's test suite.
 
 ---
 
-## 5. Чек-лист отладки и проверки реальности
+## 5. Debugging & Reality Check Checklist
 
-- [ ] Изучены спецификации и документация (Expected State).
-- [ ] Проверено фактическое состояние кода, логов и конфигураций (Actual State).
-- [ ] При наличии расхождения (Docs Drift) предложена актуализация документации.
-- [ ] Ошибка воспроизведена, зафиксированы точные логи и стек-трейс без догадок.
-- [ ] Определена первопричина с указанием файла, строки и технического объяснения.
-- [ ] Спланировано структурное исправление первопричины.
-- [ ] Написан регрессионный тест.
-- [ ] Все тесты успешно пройдены.
+- [ ] Inspected documentation and specifications (Expected State).
+- [ ] Verified physical code, logs, and configs (Actual State).
+- [ ] Highlighted and resolved Documentation Drift (if detected).
+- [ ] Reproducible failure captured with exact log/stack trace evidence.
+- [ ] Identified root cause with exact file, line, and technical explanation.
+- [ ] Formulated structural fix targeting the root cause.
+- [ ] Authored permanent regression test.
+- [ ] Verified all test suites pass 100%.

@@ -1,55 +1,57 @@
-# Фазы 1-3: Концептуальный фильтр, Архитектурная трассировка и Spec-First
+# Phases 1-3: Conceptual Filter, Architecture Tracing & Spec-First Protocol
 
-Данный регламент определяет протокол нисходящей подготовки задач (Architecture-First Top-Down Funnel): от абстрактной модели к сквозному физическому пайплайну и формализации спецификаций.
-
----
-
-## 1. ФАЗА 1: Концептуальный фильтр (`docs/ABSTRACT.md`)
-
-Перед созданием любого предложения или изменением кода агент **ОБЯЗАН** проверить соответствие задачи глобальной концептуальной модели в `docs/ABSTRACT.md`:
-
-1. **Доменные сущности и границы (Domain Entities & Bounded Contexts)**:
-   - Идентифицировать сущности, затрагиваемые задачей (согласно таблице сущностей в `docs/ABSTRACT.md`).
-   - Проверить, не нарушаются ли границы Bounded Contexts.
-2. **Модель прав и матрица авторизации $P(S, A, R, C)$**:
-   - $S$ (Subject / Актор): кто инициирует действие (Guest, User, Operator, Admin, System).
-   - $A$ (Action / Действие): что именно выполняется (Read, Create, Update, Delete, Execute).
-   - $R$ (Resource / Ресурс): над какой сущностью/ресурсом выполняется действие.
-   - $C$ (Context / Контекст): при каких условиях (наличие роли/прав, статус сущности, владение ресурсом).
-3. **Системные инварианты (System Invariants)**:
-   - **Single Source of Truth (SSOT)**: Где хранится каноническое состояние? Исключить дублирование и рассинхронизацию.
-   - **Fail-Safe**: Каково безопасное состояние системы при обрыве связи, таймауте или отказе зависимостей?
-   - **Concurrency & Ownership**: Проверить правила исключительного владения, оптимистических блокировок или защиты от гонок (Race Conditions).
+This protocol defines the top-down preparation funnel (Architecture-First Top-Down Funnel): from abstract conceptual domain model to end-to-end physical pipeline and formal specifications.
 
 ---
 
-## 2. ФАЗА 2: Трассировка физической цепочки (`docs/ARCHITECTURE.md`)
+## 1. PHASE 1: Conceptual Filter (`docs/ABSTRACT.md`)
 
-После подтверждения концепта агент **ОБЯЗАН** проследить сквозной физический путь прохождения данных по `docs/ARCHITECTURE.md`:
+Before drafting a proposal or modifying code, the agent MUST verify alignment against `docs/ABSTRACT.md`:
 
-1. **Сквозной поток данных (E2E Data Flow)**:
-   - Определить полный маршрут: `UI / Клиент -> Сетевой транспорт -> Gateway / Контроллер -> Guard / Policy -> Application Service -> Domain Model -> Port / Adapter / Repository -> Хранилище / Шина / Внешняя система`.
-2. **Транспорт и протоколы взаимодействия**:
-   - Сверить вызовы со спецификацией протоколов проекта из `docs/ARCHITECTURE.md` (REST, WebSocket/WSS, gRPC, очереди сообщений, аппаратные шины).
-   - Проверить форматы сериализации (JSON, Protobuf, бинарные фреймы).
-3. **Зоны ответственности и отказоустойчивость**:
-   - Где обрабатываются таймауты, обрывы соединений и повторные попытки (Retries)?
-   - Какие входные валидаторы (Guards, Pipes, Middleware) проверяют схему полезной нагрузки?
+1. **Domain Entities & Bounded Contexts**:
+   - Identify entities affected by the task (per entity table in `docs/ABSTRACT.md`).
+   - Validate that bounded context boundaries remain uncompromised.
+2. **Permission Matrix $P(S, A, R, C)$**:
+   - $S$ (Subject / Actor): Who initiates the action (Guest, User, Operator, Admin, System).
+   - $A$ (Action): Exact operation (Read, Create, Update, Delete, Execute, Stream).
+   - $R$ (Resource): Target domain entity/resource.
+   - $C$ (Context / Conditions): Required criteria (roles, entity state, resource ownership).
+3. **System Invariants**:
+   - **Single Source of Truth (SSOT)**: Canonical state location; eliminate duplication and state desynchronization.
+   - **Fail-Safe**: Safe system state during network disconnect, timeout, or dependency crash.
+   - **On-Demand**: Resources, hardware feeds, and media streams allocate only while active consumers exist.
+   - **Device Shadow**: Persistent state synchronization for physical devices with intermittent connectivity.
+   - **Concurrency & Ownership**: Single-operator control, optimistic locks, and race-condition guards.
 
 ---
 
-## 3. ФАЗА 3: Спецификация и унифицированный RESTful API (Spec-First)
+## 2. PHASE 2: Physical Chain Tracing (`docs/ARCHITECTURE.md`)
 
-1. **Правило нулевого кода (Zero-Code Rule)**: Категорически запрещено создавать или модифицировать файлы исходного кода до тех пор, пока спецификация не задокументирована в `.openspec/` и не согласована.
-2. **Артефакты спецификации**:
-   - Расположение: локальная папка модуля `src/app/modules/<name>/.openspec/specs.md` (или корневая `.openspec/specs.md`).
-   - Формат: Given-When-Then / Поведение состояний / Описание DTO.
-   - **Запрет на код в спеках**: Спецификации описывают бизнес-поведение, а не программный код.
+Following conceptual validation, trace the end-to-end data route through `docs/ARCHITECTURE.md`:
 
-### Унифицированный стандарт RESTful API
-- **URL**: Множественное число, kebab-case (`/api/v1/devices/{id}/telemetry-sessions`).
-- **Глаголы**: `GET` (чтение), `POST` (создание), `PATCH` (обновление), `DELETE` (удаление).
-- **Ошибки по RFC 7807 (Problem Details)**:
+1. **End-to-End Data Flow (E2E)**:
+   - Full route: `UI / Client -> Network Transport -> Gateway / Controller -> Guard / Policy -> Application Service -> Domain Model -> Port / Adapter / Repository -> Storage / Bus / Hardware Controller`.
+2. **Transports & Protocols**:
+   - Match calls against project protocol specifications (REST, WebSocket/WSS, WebRTC/WHEP, gRPC, UDP MAVLink/CRSF).
+   - Verify serialization schemas (JSON RFC 8259, Protobuf, binary telemetry frames).
+3. **Failure Domains & Resiliency**:
+   - Handle timeouts, disconnections, backpressure, and retries.
+   - Ensure boundary validation guards, pipes, and DTO validators filter incoming payloads.
+
+---
+
+## 3. PHASE 3: Specification & Unified RESTful API (Spec-First)
+
+1. **Zero-Code Rule**: Modifying or creating source code files is strictly prohibited until specifications are documented in `.openspec/` and explicitly approved.
+2. **Specification Artifacts**:
+   - Location: Module-level `.openspec/specs.md` or root `.openspec/specs.md`.
+   - Format: Given-When-Then / State Behavior / DTO contracts.
+   - **No Implementation Code**: Specifications describe business behavior and contracts, not language syntax.
+
+### Unified RESTful API Standards
+- **URL**: Plural nouns, kebab-case (`/api/v1/devices/{id}/telemetry-sessions`).
+- **HTTP Verbs**: `GET` (read), `POST` (create), `PATCH` (partial update), `PUT` (replace), `DELETE` (remove).
+- **RFC 7807 Problem Details for HTTP APIs**:
 ```json
 {
   "type": "https://api.domain.com/errors/validation-error",
@@ -62,20 +64,19 @@
 
 ---
 
-## 4. Проектирование слоя абстракции (Extensibility & Decoupling)
+## 4. Decoupling & Abstraction Layer Design
 
-При создании Proposal и Design для любых новых сущностей или сервисов агент **ОБЯЗАН** закладывать слой абстракции:
+Every proposal and design document for new entities or services MUST incorporate an abstraction layer:
 
-1. **Интерфейсы контрактов (Ports)**: Доменная логика зависит от абстракций (`IDataRepositoryPort`, `IDriverCommunicationPort`), а не от конкретных SDK/библиотек.
-2. **Изолированные адаптеры (Adapters)**: Драйверы протоколов и СУБД реализуются отдельно (`PostgresAdapter`, `CustomProtocolAdapter`), обеспечивая безболезненную замену в будущем.
+1. **Port Interfaces**: Domain logic depends on abstractions (`IDataRepositoryPort`, `IDriverCommunicationPort`), never on concrete third-party SDKs or ORM drivers.
+2. **Isolated Adapters**: Protocol drivers and database connectors are isolated in adapter implementations (`PostgresAdapter`, `CustomProtocolAdapter`), enabling frictionless replacement.
 
 ---
 
-## 5. Чек-лист подготовки перед составлением плана
+## 5. Pre-Planning Verification Checklist
 
-1. [ ] Изучен `docs/ABSTRACT.md`: проверены акторы $P(S, A, R, C)$ и инварианты (SSOT, Fail-Safe, правила владения).
-2. [ ] Изучен `docs/ARCHITECTURE.md`: прослежен сквозной E2E Flow и сетевые протоколы проекта.
-3. [ ] Спроектирован слой абстракции (порты/адаптеры) для масштабируемости.
-4. [ ] Описаны спецификации поведения (Given-When-Then) и структуры DTO/событий.
-5. [ ] Сформирован план со строгим Scope Control и получен явный 'ОК' от пользователя.
-
+1. [ ] Inspected `docs/ABSTRACT.md`: verified actors $P(S, A, R, C)$ and invariants (SSOT, Fail-Safe, On-Demand, Device Shadow).
+2. [ ] Inspected `docs/ARCHITECTURE.md`: traced end-to-end data route and physical transport protocols.
+3. [ ] Designed decoupling abstraction layer (ports and adapters).
+4. [ ] Specified behavioral scenarios (Given-When-Then) and DTO schemas.
+5. [ ] Formulated plan with strict Scope Control and awaited explicit user approval.

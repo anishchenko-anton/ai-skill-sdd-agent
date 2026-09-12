@@ -1,44 +1,41 @@
-# Фаза 2: Инженерные стандарты и написание чистого кода
+# Engineering Standards & Clean Code Protocol
 
-Данный регламент определяет стандарты генерации, изменения и ревью исходного кода.
-
----
-
-## 1. Демонстрация Few-Shot примеров
-
-Перед генерацией сложных классов или многофайловых модулей агент обязан найти или сформировать канонический **Few-Shot Пример**, соответствующий архитектуре проекта:
-- Найти существующую эталонную реализацию в кодовой базе.
-- Согласовать сигнатуры методов, обработку ошибок, DI и соглашения об именовании.
-- При внедрении нового паттерна сначала представить минимальный рабочий пример.
+This protocol defines the standards for generating, modifying, and reviewing source code.
 
 ---
 
-## 2. Принцип «Лишь чистый код» (Code Only)
-
-При генерации кода, создании артефактов и редактировании файлов:
-- **Без лишних пояснений**: Предоставлять готовый к использованию код без длинных вступительных фраз.
-- **Никаких заглушек (No Placeholders)**: Запрещено писать `// TODO: реализовать позже` или `/* ... остальной код ... */`. Все файлы должны быть полными и рабочими.
-- **Комментарии в коде на английском языке**: Docstrings, аннотации типов и комментарии в исходном коде пишутся на английском языке.
+## 1. Few-Shot Demonstration
+Before generating complex classes or multi-file modules, the agent must locate or produce a canonical **Few-Shot Example** aligned with project conventions:
+- Identify an established reference implementation in the codebase.
+- Align method signatures, error handling, dependency injection, and naming conventions.
+- When introducing a new pattern, present a minimal working prototype first.
 
 ---
 
-## 3. Принцип нулевого хардкода (Zero Hardcoding)
+## 2. "Code Only" Principle
+When generating code, creating artifacts, and editing files:
+- **Zero Conversational Fluff**: Deliver complete, production-ready code without lengthy introductions.
+- **Zero Placeholders**: Never write `// TODO: implement later` or `/* ... rest of code ... */`. Every file must be complete and compilable.
+- **English Code Comments**: Docstrings, type annotations, and code comments must be written strictly in English.
 
-**КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО** хардкодить значения внутри UI-компонентов, сервисов и бизнес-логики.
+---
 
-### Правила вынесения значений:
-1. **API эндпоинты и URL**: Выносить в конфигурацию окружения или константы API-роутов.
-2. **Тексты, сообщения и ошибки**: Выносить в словари локализации (i18n), константы или типизированные каталоги сообщений.
-3. **Магические числа и пороги**: Выносить в именованные константы или объекты конфигурации (`MAX_RETRY_ATTEMPTS = 3`, `DEFAULT_PAGE_SIZE = 20`).
-4. **Статусы и типы**: Оборачивать в `enum`, строковые литералы (Union Types) или строго типизированные Value Objects.
+## 3. Zero Hardcoding Principle
+Hardcoding literal values inside UI components, services, or business logic is **strictly prohibited**.
+
+### Value Extraction Rules:
+1. **API Endpoints & URLs**: Extract to environment configuration or centralized API route constants.
+2. **User-Facing Copy & Error Messages**: Extract to localization dictionaries (i18n), message catalogs, or string constants.
+3. **Magic Numbers & Thresholds**: Extract to named constants or configuration objects (`MAX_RETRY_ATTEMPTS = 3`, `DEFAULT_PAGE_SIZE = 20`).
+4. **Statuses & Domain Types**: Model as `enum`, string literal union types, or strongly typed Value Objects.
 
 ```typescript
-// ❌ НЕПРАВИЛЬНО (Хардкод магических значений):
+// ❌ WRONG (Hardcoded magic strings and numbers):
 if (user.status === 'act' && list.length > 50) {
   fetch('http://api.backend.com/users/save', { ... });
 }
 
-// ✅ ПРАВИЛЬНО (Сконфигурировано и типизировано):
+// ✅ CORRECT (Configured, typed, and decoupled):
 if (user.status === UserStatus.Active && list.length > AppConfig.PAGINATION.MAX_ITEMS) {
   this.userService.saveUser(user);
 }
@@ -46,9 +43,8 @@ if (user.status === UserStatus.Active && list.length > AppConfig.PAGINATION.MAX_
 
 ---
 
-## 4. Принципы SOLID и Clean Code
-
-- **Размер функций**: Функции не должны превышать 20 строк.
-- **Размер классов**: Классы не должны превышать 50-70 строк.
-- **Ранние возвраты (Early Returns)**: Устранять ветвление `else` и `else if` через защитные условия (guard clauses).
-- **Объекты-значения (Value Objects)**: Оборачивать примитивы предметной области (Email, UUID, Amount, Coordinates) в самовалидируемые классы-значения.
+## 4. SOLID & Clean Code Rules
+- **Function Length**: Functions must stay under 20 lines.
+- **Class Length**: Classes should generally stay under 50-70 lines.
+- **Early Returns (Guard Clauses)**: Eliminate `else` and nested `else if` ladders using early return statements.
+- **Value Objects**: Wrap primitive domain concepts (Email, UUID, Amount, Coordinates) in self-validating Value Object classes.

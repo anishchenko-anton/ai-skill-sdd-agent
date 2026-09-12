@@ -1,8 +1,8 @@
-<тип>(<скоуп>): <краткое описание в повелительном наклонении>
+<type>(<scope>): <short imperative description>
 
-- <Ключевое изменение 1>
-- <Ключевое изменение 2>
-- <Ключевое изменение 3>
+- <Key change 1>
+- <Key change 2>
+- <Key change 3>
 
-Версия: <новая_версия>
-Ссылка: <номер_задачи_или_issue>
+Version: <new_version>
+Closes: #<issue_number>

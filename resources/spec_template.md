@@ -1,14 +1,14 @@
-# Спецификация: [Название функционала]
+# Specification: [Feature Name]
 
-## 1. Обзор и контекст
-Краткое описание требований, решаемой задачи и целей.
+## 1. Overview & Context
+Concise summary of requirements, target problem, and objectives.
 
-## 2. API-контракт и DTO (Унифицированный RESTful)
+## 2. API Contract & DTOs (Unified RESTful)
 
-### Эндпоинты
-- `METHOD /api/v1/resource-path` — Описание действия.
+### Endpoints
+- `METHOD /api/v1/resource-path` — Operation description.
 
-### DTO Запроса (Request)
+### Request DTO
 ```typescript
 export interface RequestDto {
   readonly id: string;
@@ -16,7 +16,7 @@ export interface RequestDto {
 }
 ```
 
-### DTO Ответа (Response)
+### Response DTO
 ```typescript
 export interface ResponseDto {
   readonly data: {
@@ -26,19 +26,19 @@ export interface ResponseDto {
 }
 ```
 
-## 3. Критерии приемки (Given-When-Then)
+## 3. Acceptance Criteria (Given-When-Then)
 
-### Сценарий 1: [Успешное выполнение — Happy Path]
-- **Given (Дано)**: Валидные входные данные и активное состояние системы.
-- **When (Когда)**: Пользователь или сервис инициирует действие.
-- **Then (Тогда)**: Ресурс успешно создан со статусом `201 Created` и обновлено состояние.
+### Scenario 1: [Happy Path Execution]
+- **Given**: Valid input parameters and active system state.
+- **When**: User or service initiates the action.
+- **Then**: Resource is processed, returning `200 OK` or `201 Created` with expected state transitions.
 
-### Сценарий 2: [Ошибка валидации — Validation Error]
-- **Given (Дано)**: Невалидный запрос или отсутствуют обязательные поля.
-- **When (Когда)**: Запрос отправлен на сервер.
-- **Then (Тогда)**: Возвращается ошибка `422 Unprocessable Entity` по стандарту RFC 7807 с описанием невалидных полей.
+### Scenario 2: [Validation Error]
+- **Given**: Invalid payload or missing required fields.
+- **When**: Request is submitted to the API.
+- **Then**: System returns `422 Unprocessable Entity` formatted per RFC 7807 Problem Details.
 
-## 4. Требования к UI и производительности
-- Использованы существующие компоненты и токены дизайн-системы.
-- Во всех списках обязателен `trackBy` / `@for (...; track item.id)`.
-- Нулевой хардкод стилей, текстов и URL в шаблонах.
+## 4. UI & Performance Requirements
+- Uses existing components and design system tokens.
+- Mandatory loop keying: `@for (...; track item.id)` or `*ngFor; trackBy: trackById`.
+- Zero hardcoded styles, strings, or URLs in templates.

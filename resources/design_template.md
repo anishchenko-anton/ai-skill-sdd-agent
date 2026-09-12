@@ -1,11 +1,11 @@
-# Дизайн-документ: [Название функционала / задачи]
+# Design Document: [Feature / Task Name]
 
-> **Связанный Proposal**: `.openspec/proposal.md`  
-> **Целевой модуль**: `src/app/modules/[название_модуля]`
+> **Linked Proposal**: `.openspec/proposal.md`  
+> **Target Module**: `src/app/modules/[module_name]`
 
 ---
 
-## 1. Архитектурная схема взаимодействия (E2E Flow по `docs/ARCHITECTURE.md`)
+## 1. Architectural Interaction Schema (E2E per `docs/ARCHITECTURE.md`)
 
 ```mermaid
 flowchart TD
@@ -14,7 +14,7 @@ flowchart TD
     end
     subgraph Backend_App [Application & Gateways]
         Signals -->|Transport: WSS / REST| Gateway[Gateway / Controller]
-        Gateway -->|Guard $P(S,A,R,C)| Service[Application Service Facade]
+        Gateway -->|Guard P(S,A,R,C)| Service[Application Service Facade]
     end
     subgraph Domain_Layer [Domain Model]
         Service --> Domain[Domain Entity & Invariants]
@@ -27,37 +27,36 @@ flowchart TD
     end
 ```
 
-### Прослойка абстракции (Decoupling Layer):
-- **Интерфейс-контракт (Port)**: `I[ModuleName]Port` / `I[ModuleName]Repository`
-- **Адаптер по умолчанию**: `Default[ModuleName]Adapter`
-- **Стратегия расширения**: Изоляция внешних транспортов, API и драйверов через интерфейсы гарантирует легкую подмену и масштабирование без изменений домена и UI.
+### Decoupling Layer:
+- **Interface Contract (Port)**: `I[ModuleName]Port` / `I[ModuleName]Repository`
+- **Default Adapter**: `Default[ModuleName]Adapter`
+- **Extensibility Strategy**: Isolation of external transports, APIs, and drivers behind interfaces guarantees painless swapping without impacting domain or presentation logic.
 
 ---
 
-## 2. Эталон реализации и доноры (Component-Donor & Visual Mirroring)
+## 2. Reference Donors & Zero Novelty Invariant
 
-- **UI Донор (разметка и стили)**: `src/app/.../[existing-card/modal].component.html`
-  - *Заимствованная структура*: (сетка, отступы, типографика, кнопки)
-  - *Токены и палитра*: (строго по образцу донора, 0 кастомных цветов)
-- **Архитектурный Донор (логика и стейт)**: `src/app/.../[existing].service.ts`
-  - *Паттерн*: (Signals/Observable, обработка ошибок, DTO-маппинг)
+- **UI Donor (Layout & Styles)**: `src/app/.../[existing-card/modal].component.html`
+  - *Borrowed Structure*: (grid, padding, typography, button variants)
+  - *Design Tokens*: (strictly matching donor, 0 novel colors)
+- **Architecture Donor (Logic & State)**: `src/app/.../[existing].service.ts`
+  - *Pattern*: (Signals / RxJS, error boundaries, DTO mapping)
 
 ---
 
-## 3. Список затрагиваемых файлов
+## 3. Scope Control & Affected Files
 
-
-### Новые файлы:
+### New Files:
 - `[NEW] src/app/modules/.../feature.component.ts`
 - `[NEW] src/app/modules/.../feature.service.ts`
 - `[NEW] src/app/modules/.../feature.service.spec.ts`
 
-### Изменяемые файлы:
+### Modified Files:
 - `[MODIFY] src/app/modules/.../existing-module.ts`
 
 ---
 
-## 4. Модели данных, интерфейсы и DTO
+## 4. Domain Models, Interfaces & DTOs
 
 ```typescript
 export interface ExampleDto {
@@ -69,17 +68,17 @@ export interface ExampleDto {
 
 ---
 
-## 5. Спецификация методов и поведение
+## 5. Method Specifications & Behavior
 
 ### `FeatureService.executeAction(dto: ExampleDto): Observable<ResultDto>`
-- **Вход**: Валидированный DTO.
-- **Выход**: Результат выполнения операции.
-- **Обработка ошибок**: Возврат типизированной ошибки при сетевом сбое.
+- **Input**: Validated DTO payload.
+- **Output**: Operation result payload.
+- **Error Handling**: Formatted RFC 7807 problem details on failure.
 
 ---
 
-## 6. План валидации и тестирования
+## 6. Validation & Testing Plan
 
-1. Unit-тесты для `FeatureService` (покрытие $\ge 80\%$).
-2. Интеграционный тест взаимодействия UI-компонента и сервиса.
-3. Проверка граничных условий и валидации DTO.
+1. Unit tests for `FeatureService` (branch coverage $\ge 80\%$).
+2. Integration test for component-service interaction.
+3. Edge case and boundary DTO validation assertions.

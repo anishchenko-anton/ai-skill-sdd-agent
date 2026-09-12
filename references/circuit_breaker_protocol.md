@@ -1,37 +1,37 @@
-# Фаза: Автономный цикл (Ref Loop) и Предохранитель (Circuit Breaker)
+# Autonomous Ref Loop & 3x Circuit Breaker Protocol
 
-Данный регламент описывает правила автономного исправления ошибок сборки/тестов и механизм защиты от бесконечных циклов.
-
----
-
-## 1. Автономный цикл самоисправления (Ref Loop & Backpressure)
-
-Когда компилятор (`tsc`, `ng build`, `cargo check`), линтер (`eslint`, `flake8`) или тест-раннер (`jest`, `karma`, `pytest`) завершаются с ошибкой:
-
-1. **Анализ логов**: Агент обязан прочитать вывод консоли, найти точный файл, номер строки и код ошибки.
-2. **Локализация первопричины**: Не применять слепые правки. Разобраться в типе ошибки (несовпадение типов, отсутствие импорта, синтаксическая ошибка, логический сбой).
-3. **Автономное исправление**: Внести точечное исправление в код или тесты.
-4. **Повторный прогон**: Запустить проверку повторно для верификации исправления.
+This protocol defines the guidelines for autonomous build/test remediation and the guardrails preventing infinite execution loops.
 
 ---
 
-## 2. Предохранитель от зацикливания (Circuit Breaker — Правило 3 попыток)
+## 1. Autonomous Remediation (Ref Loop & Backpressure)
+
+When the compiler (`tsc`, `ng build`, `cargo check`), linter (`eslint`, `flake8`), or test runner (`jest`, `karma`, `pytest`) exits with failure:
+
+1. **Log Analysis**: The agent MUST inspect the console output, locating the exact file, line number, and error code.
+2. **Root Cause Localization**: Avoid blind, speculative edits. Understand the defect category (type mismatch, missing import, syntax defect, logic bug).
+3. **Targeted Fix**: Apply a surgical modification to source code or test fixtures.
+4. **Re-Verification**: Re-run the verification command to confirm resolution.
+
+---
+
+## 2. Loop Guardrail: 3x Circuit Breaker
 
 > [!CAUTION]
-> **Ограничение на попытки**:
-> Если агент совершил **3 последовательные неудачные попытки** исправить одну и ту же ошибку или сборку:
-> 1. **НЕМЕДЛЕННО ОСТАНОВИТЬСЯ**. Запрещено продолжать бесконечные правки наугад.
-> 2. **Признать тупик в чате**: Четко и структурированно описать суть проблемы пользователю.
-> 3. **Предоставить отчет**:
->    - Точный текст ошибки и стек-трейс.
->    - Какие 3 гипотезы/исправления были опробованы и почему они не сработали.
->    - Возможные альтернативные варианты решения или запрос недостающей информации.
+> **Attempt Limit**:
+> If the agent makes **3 consecutive unsuccessful attempts** to resolve the same compiler, lint, or test failure:
+> 1. **STOP IMMEDIATELY**. Continuing random speculative edits is strictly prohibited.
+> 2. **Acknowledge the Impasse in Chat**: Transparently report the roadblock to the user.
+> 3. **Deliver an Impasse Report**:
+>    - Exact error message and stack trace.
+>    - The 3 hypotheses/fixes attempted and why they failed.
+>    - Recommended alternative architectural approaches or missing technical requirements.
 
 ---
 
-## 3. Чек-лист автономного цикла
+## 3. Autonomous Ref Loop Checklist
 
-- [ ] Ошибка локализована по логам сборки/тестов.
-- [ ] Исправлена первопричина, а не просто скрыты предупреждения компилятора.
-- [ ] Количество попыток не превышает 3.
-- [ ] Все проверки проходят успешно без ошибок и предупреждений.
+- [ ] Defect isolated from build/test telemetry.
+- [ ] Root cause resolved rather than compiler warnings suppressed.
+- [ ] Attempt count does not exceed 3.
+- [ ] Verification suite runs cleanly with zero errors.

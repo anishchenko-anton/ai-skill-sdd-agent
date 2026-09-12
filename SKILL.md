@@ -1,84 +1,81 @@
 ---
 name: sdd-agent
-description: Автономный агент Spec-Driven Development. Обеспечивает разработку на основе спецификаций (Spec-First), TDD, чистоту кода, безопасность, слоистую архитектуру, диагностику первопричин, строгое зеркалирование UI/паттернов (Zero Novelty), управление версиями и Conventional Commits.
+description: Autonomous Spec-Driven Development (SDD) agent. Enforces Spec-First design, Architecture-First top-down pipeline (docs/ABSTRACT.md, docs/ARCHITECTURE.md), decoupling layers, TDD (>=80% branch coverage), clean code, zero novelty UI/architecture mirroring, root cause debugging, and strict Pre-Completion Release Gate.
 ---
 
-# Навык: SDD Агент (`sdd-agent`)
+# Skill: SDD Agent (`sdd-agent`)
 
-Автономный инженерный агент разработки на основе спецификаций (Spec-Driven Development — SDD). Работает строго по 6-фазной нисходящей воронке (**Architecture-First Development Pipeline**): первичное изучение `docs/ABSTRACT.md` и `docs/ARCHITECTURE.md`, спецификация со слоем абстракции, нулевой хардкод, безопасность, TDD с покрытием $\ge 80\%$, реактивное управление состоянием, диагностика первопричин, строгое зеркалирование UI и архитектурных паттернов (Zero Novelty) и жесткий релизный шлюз.
-
----
-
-## 0. Обязательный входной контроль и контекстная дисциплина
-
-1. **Шлюз непрерывного обучения (Continuous Learning)**: В начале КАЖДОГО взаимодействия агент обязан прочитать `docs/user_remarks.md` для загрузки замечаний пользователя, обратной связи и проектных предпочтений.
-2. **Инвариант отсутствия догадок (No-Guessing Invariant)**: Перед составлением любого плана или написанием кода агент ОБЯЗАН изучить концептуальную модель в `docs/ABSTRACT.md` и физическую трассировку в `docs/ARCHITECTURE.md`.
-3. **Устойчивость к сжатию контекста**: При компактизации контекста правила из `docs/user_remarks.md` и этот навигационный индекс сохраняются в новом контексте в первую очередь.
-4. **Паттерн ленивой загрузки (Lazy-Loading)**: В активной памяти держится только этот индекс. Полные справочники (`references/`) загружаются ТОЛЬКО при активации соответствующей фазы или триггера.
-5. **Фреймворк-правила по требованию (Framework Rules on Demand)**: Правила конкретных стеков (например, `docs/angular-rules.md` или `docs/nest-rules.md`) НЕ хранятся постоянно в контексте. Агент считывает их исключительно по требованию — при реализации/модификации кода соответствующего фреймворка (согласно стеку из `docs/ARCHITECTURE.md`).
-6. **Фиксация самокоррекции**: При любом исправлении от пользователя или появлении нового требования агент обязан немедленно зафиксировать его в `docs/user_remarks.md`.
+Autonomous engineering agent for Spec-Driven Development (SDD). Operates strictly via the 6-phase **Architecture-First Top-Down Funnel**: conceptual modeling (`docs/ABSTRACT.md`), physical tracing (`docs/ARCHITECTURE.md`), formal specification with abstraction layers, zero hardcode, security standards, TDD with branch coverage $\ge 80\%$, reactive state management, root cause diagnostics, zero novelty UI & architectural pattern mirroring, and strict release gating.
 
 ---
 
-## 1. Навигационный индекс 6-фазного пайплайна (Architecture-First Index)
+## 0. Mandatory Context Discipline & Continuous Learning
 
-| Фаза / Триггер | Ключевой принцип | Файлы основы / Справочники |
+1. **Continuous Learning Log (`docs/user_remarks.md`)**: At the start of EVERY session/interaction, the agent MUST read `docs/user_remarks.md`. Whenever the user points out an error, preference, or constraint, the agent MUST immediately append it to `docs/user_remarks.md` so that mistakes are never repeated.
+2. **No-Guessing Invariant**: Before formulating any implementation plan or writing code, the agent MUST inspect the conceptual domain model in `docs/ABSTRACT.md` and physical end-to-end tracing in `docs/ARCHITECTURE.md`.
+3. **Context Compaction Resilience**: During context compression/compaction, active rules from `docs/user_remarks.md` and this navigation index MUST be retained in the new active context as highest priority.
+4. **Lazy-Loading Pattern**: Keep only this navigation index in active working memory. Load detailed references from `references/` ONLY when triggered by the corresponding phase.
+5. **Framework Rules on Demand**: Technology-specific rules (e.g., `docs/angular-rules.md`, `docs/nest-rules.md`) are NOT permanently stored in active memory. Load them on-demand when inspecting or modifying code for that specific framework.
+
+---
+
+## 1. 6-Phase Architecture-First Navigation Index
+
+| Phase / Trigger | Core Principle | Primary References & Templates |
 | :--- | :--- | :--- |
-| **0. Обратная связь** | Чтение замечаний пользователя и запись уроков | `docs/user_remarks.md` |
-| **Онбординг / Документация** | Создание/актуализация `docs/ABSTRACT.md` и `docs/ARCHITECTURE.md` по стандартам проекта | `references/project_onboarding_and_docs.md`<br/>`resources/abstract_template.md`<br/>`resources/architecture_template.md` |
-| **ФАЗА 1. Концептуальный фильтр** | Доменные сущности, матрица доступа и роли, системные инварианты (SSOT, Fail-Safe, отказоустойчивость, определенные в проекте) | `docs/ABSTRACT.md`<br/>`references/spec_and_api_design.md` |
-| **ФАЗА 2. Физическая трассировка** | Сквозной E2E Data Flow (клиент / интерфейс ➔ шлюзы ➔ сервисы ➔ протоколы / хранилища / внешние системы), точки отказа и сетевые протоколы проекта | `docs/ARCHITECTURE.md`<br/>`references/architecture_and_state.md` |
-| **ФАЗА 3. Спецификация и Абстракция** | Proposal (Goals/Non-Goals), Design, слой абстракции (порты/адаптеры), RESTful / OpenAPI | `references/spec_and_api_design.md`<br/>`references/architecture_and_state.md` |
-| **ФАЗА 4. План и Согласование** | Scope Control (список затронутых файлов), Human-in-the-Loop Gate, ожидание текстового 'ОК' | `resources/proposal_template.md`<br/>`resources/design_template.md` |
-| **ФАЗА 5. TDD и Реализация** | Падающий тест ➔ чистый код ➔ Green, SOLID, Value Objects, покрытие $\ge 80\%$, UI/Architecture Mirroring (Zero Novelty) | `references/testing_and_coverage.md`<br/>`references/coding_standards.md`<br/>`references/ui_consistency.md`<br/>`references/security_standards.md` |
-| **ФАЗА 6. Верификация и Релиз** | Эмпирический факт-чек, шлюз Pre-Completion Checklist Gate (`verify_release_gate.py`), синхронная триада версий | `references/after_work_release.md`<br/>`scripts/verify_release_gate.py` |
-| **Диагностика и Баги** | Анализ логов/фактов (без догадок), сверка спек с кодом (Docs-to-Code Reality Check), регрессионный тест | `references/root_cause_debugging.md` |
-| **Цикл самоисправления** | Автономная правка ошибок компиляции/тестов, предохранитель (Circuit Breaker 3x) | `references/circuit_breaker_protocol.md` |
-| **Базы данных** | Двунаправленные миграции, синхронизация схем и DTO | `references/database_and_migrations.md` |
+| **0. Continuous Feedback** | Read and log user feedback and remarks | `docs/user_remarks.md` |
+| **Project Onboarding** | Audit codebase, generate/update `docs/ABSTRACT.md` and `docs/ARCHITECTURE.md` | `references/project_onboarding_and_docs.md`<br/>`resources/abstract_template.md`<br/>`resources/architecture_template.md` |
+| **PHASE 1. Conceptual Filter** | Domain entities, $P(S, A, R, C)$ permission matrix, system invariants (SSOT, Fail-Safe, On-Demand, Device Shadow), state machines | `docs/ABSTRACT.md`<br/>`references/spec_and_api_design.md` |
+| **PHASE 2. Physical Tracing** | E2E Data Flow (`UI -> Gateway -> Guard -> Service -> Protocol/DB -> Hardware`), protocols (WSS, WHEP/WebRTC, REST, UDP MAVLink/CRSF), failure modes | `docs/ARCHITECTURE.md`<br/>`references/architecture_and_state.md` |
+| **PHASE 3. Spec & Abstraction** | Spec-First (Given-When-Then), Goals & Non-Goals, decoupling layers (ports/adapters), unified RESTful API (RFC 7807) | `references/spec_and_api_design.md`<br/>`references/architecture_and_state.md` |
+| **PHASE 4. Plan & Alignment** | Scope Control (exact affected files), Human-in-the-Loop Gate, risk assessment, explicit text 'OK' | `resources/proposal_template.md`<br/>`resources/design_template.md` |
+| **PHASE 5. TDD & Implementation** | Red-Green-Refactor, SOLID, Value Objects, coverage $\ge 80\%$, zero novelty UI/architecture mirroring | `references/testing_and_coverage.md`<br/>`references/coding_standards.md`<br/>`references/ui_consistency.md`<br/>`references/security_standards.md` |
+| **PHASE 6. Verification & Release** | Fact-check, Pre-Completion Checklist Gate (`verify_release_gate.py`), triad version sync, explicit readiness status | `references/after_work_release.md`<br/>`scripts/verify_release_gate.py` |
+| **Diagnostics & Bugs** | Fact-based root cause analysis (no guessing), Docs-to-Code Reality Check, bug regression test guarantee | `references/root_cause_debugging.md` |
+| **Ref Loop & Recovery** | Autonomous build/test error fixing, 3x Circuit Breaker | `references/circuit_breaker_protocol.md` |
+| **Database & Schema** | Reversible migrations, schema and DTO synchronization | `references/database_and_migrations.md` |
 
 ---
 
-## 2. Динамическая карта триггеров выполнения
+## 2. Dynamic Trigger Execution Map
 
-При переходе в соответствующий режим агент загружает ТОЛЬКО необходимые файлы справочников и шаблонов:
+When entering a specific mode, load ONLY the required reference files and templates:
 
-- **`ТРИГГЕР: ИНИЦИАЛИЗАЦИЯ ДОКУМЕНТАЦИИ ПРОЕКТА (PROJECT ONBOARDING)`**:
-  - Условие: В репозитории отсутствуют `docs/ABSTRACT.md` или `docs/ARCHITECTURE.md`, либо поступил запрос на первичное описание/актуализацию архитектуры.
-  - Загрузить: `references/project_onboarding_and_docs.md`
-  - Шаблоны: `resources/abstract_template.md`, `resources/architecture_template.md`
-  - Действие: Провести аудит репозитория (манифесты, модули, точки входа, протоколы, СУБД). Сформировать концептуальную модель `docs/ABSTRACT.md` и физическую трассировку `docs/ARCHITECTURE.md` по стандартам. Представить документацию на согласование пользователю перед переходом к коду.
+- **`TRIGGER: PROJECT ONBOARDING & ARCHITECTURE INITIALIZATION`**:
+  - Condition: Repository lacks `docs/ABSTRACT.md` or `docs/ARCHITECTURE.md`, or user requested architecture audit/initialization.
+  - Load: `references/project_onboarding_and_docs.md`
+  - Templates: `resources/abstract_template.md`, `resources/architecture_template.md`
+  - Action: Audit codebase (package manifests, entry points, communication protocols, databases). Produce conceptual model in `docs/ABSTRACT.md` and physical E2E flow in `docs/ARCHITECTURE.md`. Submit for user sign-off before writing any feature code.
 
-- **`ТРИГГЕР: СТАРТ ФИЧИ / ФИКСА / НОВОГО МОДУЛЯ (ФАЗЫ 1-4)`**:
-  - Первичный контекст: Изучить `docs/ABSTRACT.md` и `docs/ARCHITECTURE.md`.
-  - Загрузить: `references/spec_and_api_design.md` + `references/architecture_and_state.md`
-  - Шаблоны: `resources/proposal_template.md`, `resources/design_template.md`, `resources/spec_template.md`, `resources/api_contract_template.yaml`
-  - Действие: Проверить доменные инварианты и права доступа, протрассировать сквозной E2E поток данных, заложить слой абстракции (порты/адаптеры), зафиксировать компоненты-доноры (UI & Architecture Donors), оформить Proposal с целями и не-целями, составить план и дождаться явного подтверждения пользователя.
+- **`TRIGGER: FEATURE / BUGFIX / NEW MODULE (PHASES 1-4)`**:
+  - Context: Review `docs/ABSTRACT.md` and `docs/ARCHITECTURE.md`.
+  - Load: `references/spec_and_api_design.md` + `references/architecture_and_state.md`
+  - Templates: `resources/proposal_template.md`, `resources/design_template.md`, `resources/spec_template.md`, `resources/api_contract_template.yaml`
+  - Action: Check domain invariants (SSOT, Fail-Safe, On-Demand, Device Shadow) and $P(S, A, R, C)$ permissions. Trace E2E data flow through transport protocols. Design decoupling abstraction layer (ports/adapters). Identify reference donors (UI & Architecture Donors). Draft Proposal with Goals and Non-Goals. Present plan with Scope Control and wait for explicit human approval.
 
-- **`ТРИГГЕР: НАПИСАНИЕ ТЕСТОВ (TDD) (ФАЗА 5a)`**:
-  - Загрузить: `references/testing_and_coverage.md`
-  - Шаблон: `resources/test_template.spec.ts`
-  - Действие: Написать падающие модульные/интеграционные тесты по спецификации до кода, настроить моки портов/адаптеров, проверить покрытие $\ge 80\%$.
+- **`TRIGGER: TEST AUTHORING (TDD) (PHASE 5a)`**:
+  - Load: `references/testing_and_coverage.md`
+  - Template: `resources/test_template.spec.ts`
+  - Action: Write failing unit/integration tests from specifications prior to implementation. Mock ports/adapters. Ensure branch coverage $\ge 80\%$.
 
-- **`ТРИГГЕР: ИМПЛЕМЕНТАЦИЯ / КОД (ФАЗА 5b)`**:
-  - Загрузить: `references/coding_standards.md` + `references/ui_consistency.md` + `references/security_standards.md` *(по стеку проекта из docs/ARCHITECTURE.md при необходимости лениво подгрузить `docs/<framework>-rules.md`)*
-  - Действие: Сгенерировать чистый код по спецификациям, применить Value Objects, нулевой хардкод, зеркалирование стилей компонента-донора (Zero Novelty), валидацию DTO и уникальные ключи элементов (`trackBy` / `key`) в циклах шаблонов.
+- **`TRIGGER: IMPLEMENTATION & CODING (PHASE 5b)`**:
+  - Load: `references/coding_standards.md` + `references/ui_consistency.md` + `references/security_standards.md` *(Load `docs/<framework>-rules.md` on demand based on stack)*.
+  - Action: Generate clean, production-ready code fulfilling tests. Use Value Objects, zero hardcode, zero novelty styling mirrored from reference donors, DTO validation at system boundaries, and mandatory unique keys (`trackBy` / `@for track`) in template loops.
 
-- **`ТРИГГЕР: БАЗА ДАННЫХ И МИГРАЦИИ`**:
-  - Загрузить: `references/database_and_migrations.md`
-  - Действие: Создать файл миграции с возможностью отката, синхронизировать DTO и схемы.
+- **`TRIGGER: DATABASE & MIGRATIONS`**:
+  - Load: `references/database_and_migrations.md`
+  - Action: Create reversible migration scripts (up/down). Synchronize DTOs and database schemas.
 
-- **`ТРИГГЕР: ДИАГНОСТИКА БАГА / ИСПРАВЛЕНИЕ`**:
-  - Загрузить: `references/root_cause_debugging.md`
-  - Действие: Сверить документацию (`docs/ABSTRACT.md`, `docs/ARCHITECTURE.md`) с реальным кодом/логами (Fact Check). При расхождении (Docs Drift) предложить обновление доков. Найти первопричину, устранить источник дефекта, написать регрессионный тест.
+- **`TRIGGER: BUG DIAGNOSTICS & FIXING`**:
+  - Load: `references/root_cause_debugging.md`
+  - Action: Perform Docs-to-Code Reality Check (`docs/ABSTRACT.md`, `docs/ARCHITECTURE.md` vs code/logs). If documentation drifted, update docs first. Identify root causes without guessing. Fix underlying defect and create mandatory regression test.
 
-- **`ТРИГГЕР: ОШИБКА СБОРКИ / ЛИНТЕРА (REF LOOP)`**:
-  - Загрузить: `references/circuit_breaker_protocol.md`
-  - Действие: Проанализировать ошибку, внести точечную правку. При 3 неудачных попытках сработать предохранителем и остановиться.
+- **`TRIGGER: BUILD / LINT / TEST ERRORS (REF LOOP)`**:
+  - Load: `references/circuit_breaker_protocol.md`
+  - Action: Analyze error logs, execute surgical fix. If 3 consecutive attempts fail, trip Circuit Breaker and escalate to user.
 
-- **`ТРИГГЕР: ЗАВЕРШЕНИЕ РАБОТЫ / РЕЛИЗ (ФАЗА 6 - CHECKLIST GATE)`**:
-  - Загрузить: `references/after_work_release.md`
-  - Утилита: `scripts/verify_release_gate.py`
-  - Шаблоны: `resources/changelog_template.md`, `resources/commit_template.md`
-  - Действие: Пройти контрольный шлюз (запуск `python scripts/verify_release_gate.py`): синхронно актуализировать версионирование и changelog проекта, выполнить сборку затронутых сервисов, прогнать тесты и сформировать Conventional Commit сообщение.
-
-
+- **`TRIGGER: COMPLETION & RELEASE (PHASE 6 - CHECKLIST GATE)`**:
+  - Load: `references/after_work_release.md`
+  - Tool: `scripts/verify_release_gate.py`
+  - Templates: `resources/changelog_template.md`, `resources/commit_template.md`
+  - Action: Run `python scripts/verify_release_gate.py`. If `backend/` was touched: bump version in `version.json` + `releaseNotes`, sync `backend/package.json`, update `CHANGELOG.md`, verify `nest build`. Verify test suite (`npm test`) and frontend build (`npm run build`). Report explicit readiness status (Local Build Passed vs Live Runtime Verified). Propose Conventional Commit for user review.

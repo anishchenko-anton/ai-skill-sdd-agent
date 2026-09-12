@@ -1,17 +1,17 @@
-# Фаза: Архитектура, управление состоянием и Zero-Config (Architecture & State)
+# Architecture, State Management & Zero-Config Protocol
 
-Данный регламент описывает принципы слоистой архитектуры, соответствия сквозному потоку данных из `docs/ARCHITECTURE.md`, управление реактивным состоянием и правила Zero-Config.
+This protocol defines the principles of layered architecture, alignment with end-to-end data flows in `docs/ARCHITECTURE.md`, reactive state management, and Zero-Config standards.
 
 ---
 
-## 1. Слоистая архитектура и сквозной E2E Flow (`docs/ARCHITECTURE.md`)
+## 1. Layered Architecture & E2E Tracing (`docs/ARCHITECTURE.md`)
 
-Каждое изменение в системе должно четко укладываться в сквозной маршрут и распределение по слоям:
+Every change in the codebase must strictly map into the system's end-to-end flow and architectural layers:
 
 ```mermaid
 flowchart TD
     subgraph UI_Layer [UI / Presentation Layer]
-        Component[Angular Standalone Component] --> Signals[Signals / State Store]
+        Component[UI Component] --> Signals[Signals / State Store]
     end
     subgraph App_Layer [Application Layer]
         Signals -->|Action / Event| Facade[Application Service Facade]
@@ -25,36 +25,36 @@ flowchart TD
         Port -.->|WebSocket / WSS| WsAdapter[WebSocket Client Adapter]
         Port -.->|Streaming / Realtime| StreamAdapter[Media / Stream Adapter]
         Port -.->|REST / HTTP| HttpAdapter[HTTP Client Adapter]
-        Port -.->|Custom Protocol / Driver| DriverAdapter[Hardware / Vendor Protocol Adapter]
+        Port -.->|Hardware Protocol| DriverAdapter[Hardware Protocol Adapter]
         Port -.->|Database| DbAdapter[Database Repository Adapter]
     end
 ```
 
-### Слои ответственности:
-1. **Domain Layer (Слой домена)**:
-   - Содержит чистые бизнес-сущности, интерфейсы, Value Objects и доменные инварианты из `docs/ABSTRACT.md`.
-   - **Не зависит ни от каких внешних библиотек**, UI-фреймворков или базы данных.
-2. **Application / Service Layer (Слой сценариев)**:
-   - Реализует конкретные сценарии использования (Use Cases), валидацию и бизнес-логику.
-   - Координирует передачу данных между доменом и инфраструктурой.
-3. **Infrastructure / Data Access Layer (Слой инфраструктуры)**:
-   - Реализация репозиториев, HTTP-клиентов, адаптеров БД, работы с вебсокетами и протоколами оборудования.
-4. **UI / Presentation Layer (Слой представления)**:
-   - Компоненты, шаблоны, стили.
-   - **Запрещено размещать тяжелую бизнес-логику в UI-компонентах** — они только отображают состояние и вызывают методы сервисов.
+### Architectural Layer Responsibilities:
+1. **Domain Layer**:
+   - Contains pure business entities, value objects, and domain invariants from `docs/ABSTRACT.md`.
+   - **Zero external dependencies**: completely independent of UI frameworks, HTTP clients, and database engines.
+2. **Application / Service Layer**:
+   - Implements concrete Use Cases, workflows, and business validation.
+   - Coordinates data transfer between Domain and Infrastructure layers.
+3. **Infrastructure / Data Access Layer**:
+   - Implements repositories, HTTP clients, DB adapters, WebSocket connections, and hardware protocols.
+4. **UI / Presentation Layer**:
+   - Components, templates, and presentation styles.
+   - **Zero heavy business logic in components**: components only render state and trigger service methods.
 
 ---
 
-## 2. Обязательный слой абстракции и масштабирования (Extensibility & Decoupling Layer)
+## 2. Mandatory Decoupling & Abstraction Layer (Extensibility by Default)
 
 > [!IMPORTANT]
-> **Принцип обязательной расширяемости (Extensibility by Default)**:
-> При проектировании и создании ЛЮБЫХ новых сущностей, сервисов или модулей агент **ОБЯЗАН ВСЕГДА** предлагать и включать в архитектуру вариант с **дополнительной прослойкой абстракции** (интерфейсы, порты/адаптеры, сервис-фасады, репозитории, драйверные слои).
+> **Extensibility by Default**:
+> When designing and creating ANY new entity, service, or module, the agent MUST ALWAYS include an **abstraction layer** (interfaces, ports/adapters, service facades, repositories, driver layers).
 
-### Зачем нужна прослойка абстракции:
-1. **Слабое связывание (Low Coupling)**: Бизнес-логика или UI не зависят от конкретной реализации (HTTP-клиент, ORM, SDK внешней системы, провайдер авторизации/платежей).
-2. **Легкость масштабирования и замены**: При необходимости перейти с одной БД на другую, сменить провайдера вебсокетов или масштабировать сервис — меняется ТОЛЬКО адаптер/реализация, в то время как весь домен остается нетронутым.
-3. **Изолированное тестирование (Mockability)**: Интерфейс абстракции позволяет легко подменять реальные зависимости легковесными моками в тестах (Given-When-Then).
+### Benefits:
+1. **Low Coupling**: Business logic and UI remain insulated from specific libraries (HTTP clients, ORMs, vendor SDKs).
+2. **Seamless Scaling & Swapping**: Migrating databases or changing transport libraries requires changing ONLY the adapter, leaving the domain untouched.
+3. **Test Isolation (Mockability)**: Interfaces enable lightweight mocking in unit and integration test suites.
 
 ```mermaid
 flowchart LR
@@ -64,43 +64,42 @@ flowchart LR
     E[Mock / Test Adapter] -.->|Implements| B
 ```
 
-### Паттерны прослоек абстракции:
-- **Port / Adapter (Hexagonal)**: Домен объявляет порт (интерфейс `INotificationPort`), а инфраструктура предоставляет адаптеры (`TelegramNotificationAdapter`, `EmailNotificationAdapter`, `WsNotificationAdapter`).
-- **Repository Interface**: Сервисы зависят от `IUserRepository`, а не напрямую от `TypeORM / Mongoose / Prisma`.
-- **Service Facade / Gateway**: Фронтенд-компоненты вызывают фасад сервиса модуля, скрывающий внутри множественные API-эндпоинты и маппинг DTO.
-- **Strategy & Driver Layer**: Для драйверов оборудования (ESP32, VPN-движки, криптографические модули) всегда создается базовый абстрактный драйвер-интерфейс.
+### Abstraction Patterns:
+- **Port / Adapter (Hexagonal)**: The domain declares the port (`INotificationPort`), infrastructure implements adapters (`EmailAdapter`, `WsAdapter`).
+- **Repository Interface**: Services depend on `IUserRepository`, never directly on TypeORM, Mongoose, or Prisma.
+- **Service Facade**: UI components invoke a module facade that hides multiple backend endpoints and DTO conversions.
+- **Strategy & Driver Interface**: For hardware or streaming drivers (ESP32, WebRTC, CRSF), declare an abstract driver interface.
 
 ---
 
-## 3. Управление состоянием (State Management)
+## 3. Reactive State Management
 
-1. **Однонаправленный поток данных (Unidirectional Data Flow)**:
-   - Состояние изменяется только через явные действия (Actions/Events/Methods) в сервисах/сторах.
-   - Компоненты получают данные только для чтения (Readonly Signals, Observables, Selectors).
-2. **Запрет на прямую мутацию (Immutability)**:
-   - Никогда не мутировать объекты или массивы состояния напрямую (`state.items.push(x)` ❌).
-   - Всегда создавать новые иммутабельные копии (`[...state.items, x]` ✅) или использовать встроенные механизмы реактивности фреймворка (Signals `update()`).
-3. **Очистка ресурсов (Unsubscribe / Effect Cleanup)**:
-   - Предотвращать утечки памяти: отписываться от RxJS подписок (`takeUntilDestroyed()`, `destroy$`) или очищать таймеры при уничтожении компонентов.
-
----
-
-## 4. Zero-Config и относительные API-пути
-
-1. **Только относительные пути на фронтенде**:
-   - Запрещено хардкодить адреса хостов (`http://localhost:3000`, `http://192.168.1.50:8080`).
-   - Использовать исключительно относительные пути (`/api/v1/...`) или динамический `window.location.origin`.
-2. **Динамический бэкенд**:
-   - Порты, CORS-источники и сетевые интерфейсы конфигурируются строго через переменные окружения.
-   - Приложение должно без пересборки запускаться на любом хосте или в Docker-контейнере.
+1. **Unidirectional Data Flow**:
+   - State updates occur strictly via explicit methods/actions in services and stores.
+   - Components consume readonly signals, observables, or selectors.
+2. **Immutability**:
+   - Never mutate state objects or arrays in place (`state.items.push(x)` ❌).
+   - Produce new immutable copies (`[...state.items, x]` ✅) or use framework reactivity updates (`signal.update()`).
+3. **Resource & Subscription Cleanup**:
+   - Prevent memory leaks: unsubscribe from RxJS streams (`takeUntilDestroyed()`, `destroy$`) and clear active intervals on component destruction.
 
 ---
 
-## 5. Чек-лист архитектуры
+## 4. Zero-Config & Relative Paths
 
-- [ ] Создан и описан вариант с дополнительной прослойкой абстракции (интерфейс, порт/адаптер, фасад) для будущей масштабируемости.
-- [ ] Бизнес-логика вынесена в сервисы, компоненты остаются тонкими.
-- [ ] Состояние иммутабельно и обновляется однонаправленно.
-- [ ] Сетевые пути относительны (`/api/...`), отсутствуют захардкоженные IP.
-- [ ] Ресурсы и подписки корректно очищаются.
+1. **Relative Paths on Frontend**:
+   - Never hardcode host addresses (`http://localhost:3000`, `http://192.168.1.50:8080`).
+   - Use relative `/api/v1/...` routes or dynamic `window.location.origin`.
+2. **Dynamic Backend**:
+   - Ports, CORS origins, and interfaces must configure via environment variables.
+   - Deployable across local dev, staging, or Docker containers without recompilation.
 
+---
+
+## 5. Architecture Verification Checklist
+
+- [ ] Designed an abstraction layer (interface, port/adapter, facade) for future extensibility.
+- [ ] Business logic resides in services; presentation components remain lightweight.
+- [ ] State mutations are immutable and unidirectional.
+- [ ] Network routes use relative `/api/...`; zero hardcoded IPs.
+- [ ] Subscriptions and event listeners are properly torn down upon destruction.

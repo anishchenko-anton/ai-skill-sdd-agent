@@ -1,41 +1,41 @@
-# Фаза: Стандарты безопасности и защитное программирование (Security Standards)
+# Security Standards & Defensive Programming Protocol
 
-Данный регламент описывает обязательные правила информационной безопасности и защиты данных при разработке.
-
----
-
-## 1. Защита секретов и учетных данных (Zero Hardcoded Secrets)
-
-1. **Категорический запрет на секреты в коде**: Запрещено хардкодить пароли, API-ключи, приватные токены, JWT-секреты или закрытые сертификаты в файлах исходного кода.
-2. **Использование переменных окружения**:
-   - Все конфиденциальные данные и внешние ключи загружаются строго через переменные окружения (`process.env` / `os.environ`).
-   - Всегда должен присутствовать шаблонный файл `.env.example` с описанием необходимых переменных (без реальных секретных значений).
-   - Файлы `.env` и локальные секреты должны быть обязательно добавлены в `.gitignore`.
+This protocol defines mandatory information security and defensive engineering rules across all codebase modifications.
 
 ---
 
-## 2. Валидация входных данных на границах (Defensive Boundary Validation)
+## 1. Secrets & Credentials Protection (Zero Hardcoded Secrets)
 
-1. **Принцип нулевого доверия (Never Trust User Input)**: Любые данные, поступающие извне (URL query, тела HTTP-запросов, заголовки, файлы, формы), считаются потенциально опасными.
-2. **Строгая валидация DTO**:
-   - Использовать библиотеки валидации схем (Zod, Pydantic, class-validator, Yup) на уровне контроллеров и входных шлюзов.
-   - Отклонять некорректные запросы на самом раннем этапе с понятным кодом ошибки `400 Bad Request` или `422 Unprocessable Entity` по стандарту RFC 7807.
-
----
-
-## 3. Базовая гигиена безопасности (OWASP Top 10)
-
-- **Защита от XSS**: Никогда не вставлять непроверенный пользовательский ввод напрямую в HTML (`innerHTML`, `v-html`, `[innerHTML]`) без санитизации (DOMPurify / встроенные средства фреймворка).
-- **Защита от инъекций (SQL / NoSQL)**: Использовать параметризованные запросы ORM/QueryBuilder. Никогда не выполнять конкатенацию строк в SQL-запросах.
-- **Проверка прав доступа (Authorization & Authentication)**:
-  - Проверять права пользователя на доступ к конкретному ресурсу (ID/владение объектом) на стороне бэкенда при каждом запросе.
-  - Не полагаться только на сокрытие кнопок на фронтенде.
+1. **Strict Secrets Ban**: Never hardcode passwords, API keys, private tokens, JWT secrets, or cryptographic private keys in source code files.
+2. **Environment Variable Configuration**:
+   - Confidential data must load strictly via environment variables (`process.env` / `os.environ`).
+   - Maintain a synchronized `.env.example` template documenting variable names without real values.
+   - Ensure `.env*` local secret files are explicitly present in `.gitignore`.
 
 ---
 
-## 4. Чек-лист безопасности
+## 2. Defensive Boundary Validation (Zero Trust)
 
-- [ ] В коде и коммитах отсутствуют реальные пароли, токены и приватные ключи.
-- [ ] Все входящие DTO валидируются строгими схемами.
-- [ ] Пользовательский ввод санитизируется и экранируется.
-- [ ] Запросы к базе данных параметризованы.
+1. **Never Trust External Input**: All data arriving across system boundaries (URL queries, HTTP bodies, headers, multipart uploads, WebSocket frames) must be treated as untrusted.
+2. **Strict DTO Schema Validation**:
+   - Enforce schema validation libraries (Zod, Pydantic, class-validator) at the gateway, controller, and ingress boundaries.
+   - Reject malformed payloads immediately with HTTP `400 Bad Request` or `422 Unprocessable Entity` formatted via RFC 7807 Problem Details.
+
+---
+
+## 3. Basic Security Hygiene (OWASP Top 10)
+
+- **XSS Prevention**: Never interpolate unescaped user input into DOM trees (`innerHTML`, `[innerHTML]`) without explicit sanitization (DOMPurify or framework built-ins).
+- **Injection Prevention (SQL / NoSQL / Command)**: Use parameterized queries, ORMs, or query builders. Never concatenate raw user input into SQL or shell command strings.
+- **Server-Side Authorization**:
+   - Enforce permissions and resource ownership ($P(S, A, R, C)$ matrix) on the backend for every incoming request.
+   - Never rely solely on client-side button hiding or UI guards.
+
+---
+
+## 4. Security Verification Checklist
+
+- [ ] Zero real passwords, tokens, or private keys committed to source control.
+- [ ] Inbound DTOs strictly validated against schema validators.
+- [ ] User input sanitized and escaped prior to rendering.
+- [ ] Database interactions utilize parameterized queries exclusively.

@@ -2,12 +2,12 @@ openapi: 3.0.3
 info:
   title: Unified SDD RESTful API Contract
   version: 1.0.0
-  description: Унифицированный API-контракт модуля по стандартам Spec-Driven Development.
+  description: Unified module API contract adhering to Spec-Driven Development standards.
 
 paths:
   /api/v1/items:
     get:
-      summary: Получить список элементов
+      summary: Retrieve item list
       parameters:
         - name: page
           in: query
@@ -23,7 +23,7 @@ paths:
             default: 20
       responses:
         '200':
-          description: Успешный ответ со списком элементов
+          description: Successful response returning item collection
           content:
             application/json:
               schema:
@@ -32,7 +32,7 @@ paths:
           $ref: '#/components/responses/ProblemDetailsError'
 
     post:
-      summary: Создать новый элемент
+      summary: Create new item
       requestBody:
         required: true
         content:
@@ -41,7 +41,7 @@ paths:
               $ref: '#/components/schemas/CreateItemRequest'
       responses:
         '201':
-          description: Элемент успешно создан
+          description: Item created successfully
           content:
             application/json:
               schema:
@@ -112,7 +112,7 @@ components:
 
   responses:
     ProblemDetailsError:
-      description: Ошибка по стандарту RFC 7807
+      description: RFC 7807 Problem Details Error
       content:
         application/json:
           schema:

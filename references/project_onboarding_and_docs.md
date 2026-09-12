@@ -1,68 +1,70 @@
-# Регламент: Инициализация проектной документации (Project Onboarding & Docs Protocol)
+# Protocol: Project Onboarding & Architectural Documentation
 
-Данный регламент описывает пошаговый алгоритм действий SDD-агента при входе в новый проект или при необходимости создать/актуализировать ключевые описательные документы: `docs/ABSTRACT.md` и `docs/ARCHITECTURE.md`.
-
----
-
-## 1. Когда активируется данный регламент
-
-1. **Новый проект / Отсутствие документации**: В репозитории отсутствуют файлы `docs/ABSTRACT.md` или `docs/ARCHITECTURE.md`.
-2. **Явный запрос пользователя**: Пользователь запрашивает: *«Инициализируй документацию проекта»*, *«Создай ABSTRACT и ARCHITECTURE»* или *«Опиши архитектуру текущего проекта»*.
-3. **Обнаружение расхождений (Docs Drift)**: Существующая документация устарела или противоречит реальному коду репозитория.
+This protocol defines the step-by-step procedure for initializing or synchronizing core project documentation: `docs/ABSTRACT.md` and `docs/ARCHITECTURE.md`.
 
 ---
 
-## 2. Фаза исследования проекта (Project Discovery & Fact-Check)
+## 1. Activation Triggers
 
-Агент **КАТЕГОРИЧЕСКИ НЕ ДОЛЖЕН** выдумывать архитектуру. Анализ проводится строго на основе физических артефактов проекта:
+1. **New Project / Missing Documentation**: The repository lacks `docs/ABSTRACT.md` or `docs/ARCHITECTURE.md`.
+2. **Explicit User Request**: User requests: *"Initialize project documentation"*, *"Create ABSTRACT and ARCHITECTURE"*, or *"Audit current architecture"*.
+3. **Documentation Drift**: Existing architecture documents are outdated or contradict actual codebase behavior.
 
-### 2.1. Определение стека и конфигураций
-- Изучить файлы манифестов зависимостей:
+---
+
+## 2. Discovery & Fact-Check Phase
+
+The agent MUST NEVER guess architecture. Analysis must be grounded in physical codebase artifacts:
+
+### 2.1. Stack & Configuration Audit
+- Inspect dependency manifests:
   - Node.js: `package.json`, `pnpm-workspace.yaml`, `tsconfig.json`
   - Python: `pyproject.toml`, `requirements.txt`, `Pipfile`
   - Go / Rust / C++: `go.mod`, `Cargo.toml`, `CMakeLists.txt`, `platformio.ini`
-- Изучить инфраструктурные манифесты:
-  - `docker-compose.yml`, `Dockerfile`, конфигурации Kubernetes, Nginx/Traefik конфиги.
+- Inspect infrastructure configs:
+  - `docker-compose.yml`, `Dockerfile`, Kubernetes manifests, Nginx / Traefik configs.
 
-### 2.2. Анализ структуры модулей и потоков данных
-- Определить границы подсистем (клиентская часть, API-шлюзы, бэкенд-сервисы, воркеры, микроконтроллеры).
-- Найти точки входа (Entrypoints: `main.ts`, `app.py`, `server.go`, роуты, контроллеры, сокет-хэндлеры).
-- Выявить сущности БД и схемы моделей (ORM/ODM сущности, SQL миграции, Proto-файлы, OpenAPI спецификации).
-- Определить реальные протоколы обмена (REST, WebSocket, gRPC, очереди RabbitMQ/Kafka, аппаратные шины).
-
----
-
-## 3. Генерация `docs/ABSTRACT.md` (Концептуальный уровень)
-
-Использовать эталонный шаблон: `resources/abstract_template.md`.
-
-### Обязательные требования к наполнению:
-1. **Bounded Contexts**: Зафиксировать четкие границы функциональных зон (например: Авторизация, Управление устройствами, Биллинг).
-2. **Доменные сущности**: Составить таблицу ключевых бизнес-сущностей с типами и связями.
-3. **Матрица $P(S, A, R, C)$**: Описать права ролей (Subject) на операции (Action) над ресурсами (Resource) в заданных условиях (Context).
-4. **Инварианты**:
-   - Явно указать **SSOT** (где хранится каноническое состояние для каждого типа данных).
-   - Зафиксировать правила **Fail-Safe** (поведение при авариях и разрывах).
-   - Зафиксировать правила конкурентного доступа (Single Ownership / Mutex / Optimistic Locking).
-5. **Диаграмма состояний (Mermaid)**: Построить стейт-машину жизненного цикла для центральной сущности проекта.
+### 2.2. Subsystem Boundaries & Data Flows
+- Identify boundaries: client UI, API gateways, backend services, async workers, hardware controllers.
+- Identify Entrypoints: `main.ts`, `app.py`, `server.go`, routers, controllers, WebSocket handlers.
+- Identify DB schemas & models: ORM/ODM entities, SQL migrations, Proto files, OpenAPI schemas.
+- Identify physical transports: REST, WebSocket (WSS), WebRTC (WHEP), gRPC, message queues (RabbitMQ/Kafka), hardware buses (UART, CAN, UDP MAVLink/CRSF).
 
 ---
 
-## 4. Генерация `docs/ARCHITECTURE.md` (Физический уровень)
+## 3. Authoring `docs/ABSTRACT.md` (Conceptual Level)
 
-Использовать эталонный шаблон: `resources/architecture_template.md`.
+Reference Template: `resources/abstract_template.md`.
 
-### Обязательные требования к наполнению:
-1. **Топология компонентов**: Составить Mermaid-схему реального взаимодействия узлов (UI ➔ Gateway ➔ Services ➔ DB/Brokers/External).
-2. **Сквозная E2E трассировка**: Пошагово расписать цепочку прохождения мутирующего запроса от нажатия кнопки в UI до фиксации в хранилище/отправки в контроллер.
-3. **Матрица сетевых протоколов**: Перечислить все используемые транспорты, сетевые порты и форматы полезной нагрузки.
-4. **Точки изоляции (порты и адаптеры)**: Показать, какими интерфейсами абстрагированы внешние технологии, базы данных и протоколы.
-5. **Точки отказа (Failure Modes)**: Указать таймауты, механизмы повторов (retry), деградацию и способы защиты от сбоев.
+### Mandatory Requirements:
+1. **Bounded Contexts**: Clear boundaries for functional zones (e.g., Identity, Device Control, Telemetry).
+2. **Domain Entities & Value Objects**: Comprehensive table with types, constraints, and relationships.
+3. **$P(S, A, R, C)$ Matrix**: Detailed permissions mapping Subjects to Actions over Resources under Context conditions.
+4. **System Invariants**:
+   - **SSOT**: Canonical data store for each entity.
+   - **Fail-Safe & Graceful Degradation**: System behavior during network partition or failure.
+   - **On-Demand**: Allocation of compute or streaming channels strictly on-demand when consumers are active.
+   - **Device Shadow**: Synchronized state mirror for physical devices with intermittent connectivity.
+   - **Concurrency & Ownership**: Locking, mutexes, and single-operator ownership rules.
+5. **State Machines**: Lifecycle state machine diagram (Mermaid) for primary domain entities.
 
 ---
 
-## 5. Шлюз согласования с пользователем (Human-in-the-Loop)
+## 4. Authoring `docs/ARCHITECTURE.md` (Physical Level)
 
-1. Созданные или обновленные документы `docs/ABSTRACT.md` и `docs/ARCHITECTURE.md` представляются пользователю в виде Proposal / Plan.
-2. Агент подсвечивает ключевые архитектурные выводы и задает уточняющие вопросы по неоднозначным моментам.
-3. Переход к разработке фич и модулей по SDD-пайплайну допускается **только после явного одобрения пользователем** сформированной документации.
+Reference Template: `resources/architecture_template.md`.
+
+### Mandatory Requirements:
+1. **Component Topology**: Mermaid diagram of physical nodes (UI ➔ Gateway ➔ Services ➔ DB / Broker / Hardware).
+2. **End-to-End Tracing (E2E Flow)**: Step-by-step path of a mutation request from user click to DB commit or hardware dispatch.
+3. **Network Protocols Matrix**: Protocols, ports, and payload formats (REST JSON, WSS, WebRTC WHEP, UDP MAVLink/CRSF).
+4. **Decoupling Points (Ports & Adapters)**: Interfaces abstracting external systems, storage, and drivers.
+5. **Failure Modes & Resiliency**: Timeouts, retries with exponential backoff, rate limiting, and circuit breakers.
+
+---
+
+## 5. Human-in-the-Loop Gate
+
+1. Present created or updated `docs/ABSTRACT.md` and `docs/ARCHITECTURE.md` to the user in chat.
+2. Highlight key architectural findings and request clarification on ambiguous items.
+3. Code implementation and feature work may begin **ONLY after explicit user approval** of the architecture documents.

@@ -1,37 +1,37 @@
-# Фаза 3: Единообразие UI и обязательная оптимизация `trackBy`
+# UI Consistency, Zero Novelty & Loop Optimization Protocol
 
-Данный регламент определяет правила создания UI-компонентов, визуального соответствия стилям страницы и оптимизации рендеринга шаблонов.
-
----
-
-## 1. Единообразие интерфейса и архитектуры (UI & Pattern Consistency)
-
-Каждый новый UI-элемент, кнопка, модальное окно, поле ввода, таблица или карточка **ОБЯЗАНЫ** стилизоваться и структурироваться строго по аналогии с существующими компонентами целевой страницы и дизайн-системы проекта.
-
-### Принцип «Zero Novelty» (Нулевая отсебятина):
-1. **Запрет на изобретение нового дизайна**: Категорически запрещено придумывать новые цвета, шрифты, радиусы скругления, размеры отступов, варианты кнопок или модалок, если в проекте уже есть существующие элементы.
-2. **Обязательный компонент-донор (Component / Style Donor)**:
-   - Перед созданием или изменением любого UI агент **ОБЯЗАН физически прочитать** код соседнего существующего компонента на той же или смежной странице.
-   - Скопировать из донора:
-     - Структуру разметки (flex/grid, иерархию контейнеров).
-     - CSS-классы, токены Tailwind / темы (цвета фона, текста, границ).
-     - Отступы (`padding`, `margin`, `gap`) — строго по сетке донора.
-     - Типографику (размеры `text-sm`/`text-base`, жирность `font-medium`/`font-semibold`, цвет muted подписей).
-     - Иконки: использовать строго ту же библиотеку и тот же стиль иконок, что и на странице.
-     - Состояния (hover, active, focus, disabled, loading).
-3. **Архитектурное зеркалирование (Architecture Mirroring)**:
-   - Логика компонента (Signals, Observables, методы вызова сервисов, обработка ошибок) должна повторять архитектурный паттерн донора, а не изобретать сторонний способ управления состоянием.
-4. **Композиция из имеющихся кирпичиков**: Если нужного готового UI-компонента нет, он собирается исключительно из существующих базовых атомов дизайн-системы проекта. Любой кастомный стиль требует явного обоснования.
+This protocol defines standards for creating UI components, matching visual design systems, and optimizing template rendering performance.
 
 ---
 
-## 2. Обязательное использование `trackBy` / `@for track`
+## 1. UI Consistency & Architectural Pattern Mirroring
 
-Для предотвращения избыточных перерисовок DOM, утечек памяти и мерцания интерфейса **ВСЕ циклы рендеринга списков ОБЯЗАНЫ использовать выражение отслеживания уникальности**.
+Every new UI element, button, modal dialog, input field, table, or card **MUST** be styled and structured strictly by mirroring existing components on the target page and the project's design system.
 
-### Современный синтаксис (Angular 17+ / Modern Control Flow):
+### The "Zero Novelty" Invariant:
+1. **No Design Invention**: Inventing new colors, fonts, border radii, arbitrary padding/margin scales, custom button variants, or bespoke modal wrappers is strictly prohibited when established elements exist in the project.
+2. **Mandatory Component / Style Donor (Reference Donor)**:
+   - Before authoring or updating any UI, the agent MUST **physically read** the source code of an adjacent component on the same or sibling page.
+   - Replicate directly from the donor:
+     - Markup layout structure (flex, grid, container hierarchy).
+     - CSS classes, theme design tokens (background, text colors, borders).
+     - Spacing metrics (`padding`, `margin`, `gap`) strictly aligned to the donor's grid.
+     - Typography (`text-sm` vs `text-base`, `font-medium` vs `font-semibold`, muted caption colors).
+     - Iconography: use the exact same icon set, symbol syntax, and sizing conventions.
+     - Interactive states (hover, active, focus, disabled, loading skeletons).
+3. **Architectural Pattern Mirroring**:
+   - Component logic (Signals, Observables, service invocation, error boundaries) must mirror the architectural pattern of the donor rather than introducing foreign state-management paradigms.
+4. **Composition from Established Primitives**: If a pre-built compound component is unavailable, compose it solely from established design system atoms. Any custom styling requires explicit justification in the proposal.
+
+---
+
+## 2. Mandatory Loop Keying (`trackBy` / `@for track`)
+
+To eliminate wasteful DOM re-renders, memory leaks, and UI flickering, **ALL template iteration loops MUST specify an explicit unique tracking expression**.
+
+### Modern Control Flow (Angular 17+ / Modern Templates):
 ```html
-<!-- ✅ ПРАВИЛЬНО: Современный @for с track по уникальному свойству -->
+<!-- ✅ CORRECT: Modern @for with track on unique identifier -->
 @for (item of items(); track item.id) {
   <app-user-card [user]="item" />
 }
@@ -41,31 +41,31 @@
 }
 ```
 
-### Классический синтаксис (`*ngFor`):
+### Classic Template Syntax (`*ngFor`):
 ```html
-<!-- ✅ ПРАВИЛЬНО: *ngFor с функцией trackBy -->
+<!-- ✅ CORRECT: *ngFor with trackBy function -->
 <li *ngFor="let item of items; trackBy: trackById">
   {{ item.name }}
 </li>
 ```
 ```typescript
-// В компоненте:
+// Inside component class:
 trackById(index: number, item: IdentifiableItem): string | number {
   return item.id;
 }
 ```
 
-### Запреты:
-- ❌ **ЗАПРЕЩЕНО**: Рендерить списки через `*ngFor` без функции `trackBy`.
-- ❌ **ЗАПРЕЩЕНО**: Использовать индекс массива (`track $index` или `trackByIndex`), если у объектов есть уникальный идентификатор (`id`, `uuid`, `code`).
+### Prohibitions:
+- ❌ **PROHIBITED**: Rendering list loops via `*ngFor` without a `trackBy` function.
+- ❌ **PROHIBITED**: Tracking by array index (`track $index` or `trackByIndex`) when entities possess a unique identifier (`id`, `uuid`, `code`).
 
 ---
 
-## 3. Чек-лист проверки качества UI
+## 3. UI Quality Verification Checklist
 
-- [ ] Физически прочитан и зафиксирован компонент-донор страницы.
-- [ ] Существующие компоненты страницы проверены на визуальное соответствие (цвета, шрифты, отступы, иконки).
-- [ ] Отсутствуют новые кастомные цвета, шрифты, несогласованные CSS-классы и стили.
-- [ ] В шаблоне отсутствуют захардкоженные стили, тексты и ссылки.
-- [ ] Во всех циклах списков указан `trackBy` или `track item.id`.
-- [ ] Состояния загрузки (Loading), пустых данных (Empty) и ошибок (Error) согласованы со стандартами приложения.
+- [ ] Physically inspected and recorded the Reference Donor component.
+- [ ] Verified alignment with existing page components (colors, fonts, padding, icons).
+- [ ] Zero unapproved custom colors, arbitrary fonts, or ad-hoc CSS classes.
+- [ ] No hardcoded inline styles, static strings, or absolute API links in templates.
+- [ ] Every list iteration loop specifies `track item.id` or `trackBy`.
+- [ ] Loading, Empty, and Error states mirror established application patterns.

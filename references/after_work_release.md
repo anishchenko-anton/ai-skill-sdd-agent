@@ -1,98 +1,96 @@
-# Фаза 5: Регламент релиза и завершения работы (After Work)
+# Phase 6: Release & Post-Execution Protocol (After Work & Release Gate)
 
-Данный регламент определяет обязательные действия после успешного завершения задачи, разработки фичи, рефакторинга или исправления бага.
+This protocol defines the mandatory release, versioning, and verification workflow following any feature development, refactoring, or bugfix.
 
 ---
 
-## 0. 🔒 Блокирующий передрелизный шлюз (Pre-Completion Checklist Gate)
+## 0. 🔒 Pre-Completion Checklist Gate
 
 > [!IMPORTANT]
-> **Принцип предотвращения туннельного фокуса (Anti-Hotfix Tunnel Vision)**:
-> Перед тем как сформировать финальный ответ пользователю о завершении ЛЮБОЙ задачи или хотфикса, агент ОБЯЗАН выполнить автоматическую проверку контрольного шлюза:
+> **Anti-Hotfix Tunnel Vision Invariant**:
+> Prior to delivering any completion report for ANY task or hotfix, the agent MUST execute the automated checklist gate verification:
 
 ```mermaid
 flowchart TD
-    A[Завершение задачи / Хотфикса] --> B{Затронут ли хоть один файл в backend/?}
-    B -->|ДА| C[1. version.json: +1 patch/minor и releaseNotes]
-    C --> D[2. backend/package.json: синхронизация version]
-    D --> E[3. CHANGELOG.md: новый блок релиза с датой]
-    E --> F[4. nest build: успешная сборка бэкенда]
-    F --> G[5. Unit-тесты backend: npm test 100% PASS]
-    B -->|НЕТ: только UI| H[Сборка фронтенда: npm run build 100% PASS]
+    A[Task Completion / Hotfix] --> B{Was any file in backend/ touched?}
+    B -->|YES| C[1. version.json: +1 patch/minor & releaseNotes]
+    C --> D[2. backend/package.json: sync version]
+    D --> E[3. CHANGELOG.md: new release block with date]
+    E --> F[4. nest build: successful backend compilation]
+    F --> G[5. Backend unit tests: npm test 100% PASS]
+    B -->|NO: UI Only| H[Frontend build: npm run build 100% PASS]
     G --> H
-    H --> I[Формирование Conventional Commit]
-    I --> J[Запрос текстового подтверждения пользователя]
+    H --> I[Propose Conventional Commit]
+    I --> J[Wait for explicit user text approval]
 ```
 
-### Правила шлюза:
-1. **Фільтр файлов бэкенда**: Изменен хотя бы один файл в `backend/` (DTO, сервис, контроллер, сущность, схема, конфигурация)?
-   - **ЯКЩО ТАК**:
-     - `version.json` — версия обязательно увеличена (+1 patch/minor), детальное описание добавлено в `releaseNotes`.
-     - `backend/package.json` — поле `"version"` синхронизировано в точности.
-     - `CHANGELOG.md` — добавлен новый блок релиза с датой и детальным описанием изменений.
-     - `nest build` — бэкенд успешно собран с новой версией.
-   - **ЯКЩО НІ** (сугубо визуальные правки UI без затрагивания бэкенда): подъем версии бэкенда не требуется.
-2. **Проверка целостности (Integrity Check)**:
-   - Unit-тесты бэкенда (`npm test` в `backend/`) — 100% PASS.
-   - Сборка фронтенда (`npm run build` во `frontend/`) — 100% PASS.
-3. **Контрактная дисциплина**: Любая правка DTO или API-контракта ОБЯЗАТЕЛЬНО требует синхронного бампа версии для корректной работы систем автообновления и OTA клиентов.
-4. **Автоматическая верификация (Gatekeeper Script)**: Запуск скрипта `python scripts/verify_release_gate.py` (или `src/sdd-agent/scripts/verify_release_gate.py`) для аппаратного подтверждения отсутствия пропусков в триаде файлов.
-5. **Четкое разграничение статусов готовности (Explicit Readiness Status)**:
-   - **Уровень 1: Локальная верификация (Local Build & Unit Tests Passed)** — код скомпилирован, линтеры и тесты пройдены в локальной среде dev. Рантайм не проверялся.
-   - **Уровень 2: Эксплуатационная верификация (Deployed & Live Runtime Verified)** — сервис физически запущен, проверен через реальные сетевые вызовы, вебсокеты, UI или логи запущенного процесса.
-   - *Запрещено выдавать локальную компиляцию за полную готовность на живом сервере без явного указания факта отсутствия рантайм-проверки.*
+### Gate Rules:
+1. **Backend File Filter**: Was at least one file modified under `backend/` (DTO, service, controller, entity, schema, configuration)?
+   - **IF YES**:
+     - `version.json` — Version MUST be incremented (+1 patch/minor), with detailed entries added to `releaseNotes`.
+     - `backend/package.json` — The `"version"` field must be synchronized identically.
+     - `CHANGELOG.md` — A new release entry added with timestamp and categorized changes.
+     - `nest build` — Backend must compile cleanly with the updated version.
+   - **IF NO** (Purely visual UI adjustments with zero backend modifications): Backend version bump is not required.
+2. **Integrity Check**:
+   - Backend unit tests (`npm test` in `backend/`) — 100% PASS.
+   - Frontend build (`npm run build` in `frontend/`) — 100% PASS.
+3. **Contract Discipline**: Any DTO or API contract modification MUST trigger a synchronized version bump to guarantee client auto-update and OTA compatibility.
+4. **Automated Gatekeeper**: Execute `python scripts/verify_release_gate.py` to programmatically confirm integrity across all versioning files.
+5. **Explicit Readiness Status (No False Reports)**:
+   - **Level 1: Local Verification (Local Build & Unit Tests Passed)**: Code compiles, linters pass, and unit tests pass locally. Runtime execution was NOT verified.
+   - **Level 2: Operational Verification (Deployed & Live Runtime Verified)**: Service is physically running and verified via live endpoints, WebSockets, UI interactions, or active container logs.
+   - *Never represent local compilation as live runtime readiness without explicitly stating the lack of runtime verification.*
 
 ---
 
+## 1. Mandatory Release Checklist (The 3 Pillars of Release)
 
-## 1. Обязательный чек-лист релиза (3 столпа завершения)
+Following the successful passage of all automated test suites and gatekeeper checks:
 
-После успешного прохождения всех тестов и проверок:
+### Step 1: Update `CHANGELOG.md`
+Add a release entry in Keep a Changelog format:
+- `Added`: for new features.
+- `Changed`: for changes in existing functionality.
+- `Deprecated`: for soon-to-be-removed features.
+- `Removed`: for now-removed features.
+- `Fixed`: for any bug fixes.
+- `Security`: in case of vulnerabilities.
 
-### Шаг 1: Обновление `CHANGELOG.md`
-Добавить запись в `CHANGELOG.md` в формате Keep a Changelog:
-- `Added`: для новой функциональности.
-- `Changed`: для изменений в существующей функциональности.
-- `Deprecated`: для функций, которые скоро будут удалены.
-- `Removed`: для удаленного функционала.
-- `Fixed`: для исправления багов.
-- `Security`: при устранении уязвимостей.
-
-### Шаг 2: Синхронное увеличение версии (`+1` Bump)
-Обновить версию во всех файлах манифеста проекта:
-- `version.json` (включая массив `releaseNotes`)
+### Step 2: Synchronous Version Increment (`+1` Bump)
+Update the version string across all project manifests:
+- `version.json` (including the `releaseNotes` array)
 - `backend/package.json`
-- `frontend/package.json` (при релизах клиентской части)
-- **Patch (+0.0.1)**: Обратно совместимые исправления багов и микро-правки.
-- **Minor (+0.1.0)**: Обратно совместимый новый функционал.
-- **Major (+1.0.0)**: Критические несовместимые изменения API.
+- `frontend/package.json` (for client releases)
+- **Patch (+0.0.1)**: Backwards-compatible bug fixes and minor adjustments.
+- **Minor (+0.1.0)**: Backwards-compatible new functionality.
+- **Major (+1.0.0)**: Breaking architectural or API changes.
 
-### Шаг 3: Формирование Conventional Commit сообщения
-Сформировать структурированное сообщение для коммита на ревью пользователю:
+### Step 3: Propose Conventional Commit Message
+Format a structured commit message for user review:
 
 ```
-<тип>(<скоуп>): <краткое описание>
+<type>(<scope>): <short summary>
 
-- <подробный пункт 1>
-- <подробный пункт 2>
+- <detailed item 1>
+- <detailed item 2>
 
 [Closes #issue / Refs #ticket]
 ```
 
-**Разрешенные типы**:
-- `feat`: Новая функциональность.
-- `fix`: Исправление ошибки.
-- `refactor`: Изменение кода без изменения поведения и без добавления фич.
-- `perf`: Улучшение производительности.
-- `test`: Добавление или корректировка тестов.
-- `docs`: Изменения в документации.
-- `chore`: Обслуживание, зависимости, конфигурация сборки.
+**Allowed Types**:
+- `feat`: New feature.
+- `fix`: Bug fix.
+- `refactor`: Code restructuring without behavioral change.
+- `perf`: Performance enhancement.
+- `test`: Adding or correcting tests.
+- `docs`: Documentation updates.
+- `chore`: Maintenance, dependencies, build configurations.
 
 ---
 
-## 2. Защитный барьер Git (Git Approval Safeguard)
+## 2. Git Approval Safeguard
 
 > [!CAUTION]
-> **Обязательное подтверждение пользователя**:
-> Агенту КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО автоматически выполнять команды `git commit` и `git push`. Всегда представлять предложенное сообщение коммита, диффы changelog и увеличение версии в чате и запрашивать явное текстовое одобрение пользователя.
-
+> **Mandatory User Confirmation**:
+> Executing `git commit` or `git push` automatically without user sign-off is **STRICTLY PROHIBITED**. Always propose the commit message, changelog diff, and version increments in chat, awaiting explicit human approval before running git write operations.

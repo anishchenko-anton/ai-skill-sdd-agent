@@ -1,32 +1,32 @@
-# Фаза: Базы данных, миграции и синхронизация типов (Database & Migrations)
+# Database, Migrations & Type Integrity Protocol
 
-Данный регламент определяет порядок изменения схем данных, создания миграций и сохранения целостности.
-
----
-
-## 1. Регламент миграций базы данных
-
-1. **Обязательность файла миграции**: Любое добавление, изменение или удаление таблиц, колонок, индексов и связей в БД **ОБЯЗАТЕЛЬНО** оформляется отдельным файлом миграции (Prisma, TypeORM, Alembic, Flyway и т.д.).
-2. **Двунаправленность (Up / Down)**:
-   - Каждая миграция должна содержать инструкцию применения (`up`) и инструкцию безопасного отката (`down`), если это поддерживается инструментом.
-3. **Безопасность данных (Zero Data Loss)**:
-   - Запрещено немотивированное удаление (`DROP TABLE`, `DROP COLUMN`) колонок с живыми данными в рабочей БД.
-   - Изменения типов колонок должны сопровождаться стратегией конвертации данных.
+This protocol governs database schema migrations, transactional mutations, and cross-layer type consistency.
 
 ---
 
-## 2. Синхронизация типов между БД, Бэкендом и Фронтендом
+## 1. Database Migration Protocol
 
-1. **Единый источник истины (Single Source of Truth)**:
-   - Типы и интерфейсы TypeScript/Python генерируются или строго синхронизируются со схемой БД и OpenAPI-контрактом.
-2. **Транзакционность**:
-   - Любые связанные операции записи в несколько таблиц должны выполняться внутри атомарной транзакции (Database Transaction).
+1. **Mandatory Migration Files**: Any addition, alteration, or deletion of tables, columns, indexes, or relationships in the database **MUST** be committed via a dedicated migration script (Prisma, TypeORM, Alembic, Flyway, Knex, etc.).
+2. **Bidirectional Migrations (Up / Down)**:
+   - Migrations should declare an apply (`up`) and a safe rollback (`down`) routine where supported by the ORM/tooling.
+3. **Data Safety (Zero Data Loss)**:
+   - Destructive operations (`DROP TABLE`, `DROP COLUMN`) on tables containing active data are strictly prohibited without an explicit migration plan.
+   - Column type mutations must include safe data casting/transformation routines.
 
 ---
 
-## 3. Чек-лист проверки работы с БД
+## 2. Cross-Layer Type Synchronization
 
-- [ ] Создан файл миграции для всех изменений схемы.
-- [ ] Описана процедура отката миграции.
-- [ ] DTO и клиентские типы согласованы с новой схемой.
-- [ ] Многошаговые мутации обернуты в транзакции.
+1. **Single Source of Truth (SSOT)**:
+   - Backend DTOs and frontend client models must derive from or strictly match the database schema and OpenAPI specification.
+2. **Atomicity & Transactions**:
+   - Multi-step writes across multiple tables must execute within an explicit database transaction to guarantee ACID consistency.
+
+---
+
+## 3. Database Verification Checklist
+
+- [ ] Dedicated migration script generated for schema changes.
+- [ ] Safe rollback logic specified.
+- [ ] DTOs, domain models, and frontend interfaces synchronized with new schema.
+- [ ] Multi-table mutations wrapped in atomic transactions.
