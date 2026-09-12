@@ -22,11 +22,11 @@ flowchart TD
     end
     subgraph Infra_Layer [Infrastructure Layer]
         Facade -->|Interface Port| Port[<< Interface >> ITransportPort / IRepository]
-        Port -.->|WSS / Socket.IO| WsAdapter[WebSocket Client Adapter]
-        Port -.->|WHEP / WebRTC| MediaAdapter[MediaMTX Stream Adapter]
-        Port -.->|REST / HTTP| HttpAdapter[Axios / HttpService Adapter]
-        Port -.->|MAVLink / CRSF| SerialAdapter[Serial / UDP Controller Adapter]
-        Port -.->|Database| DbAdapter[TypeORM / Prisma Adapter]
+        Port -.->|WebSocket / WSS| WsAdapter[WebSocket Client Adapter]
+        Port -.->|Streaming / Realtime| StreamAdapter[Media / Stream Adapter]
+        Port -.->|REST / HTTP| HttpAdapter[HTTP Client Adapter]
+        Port -.->|Custom Protocol / Driver| DriverAdapter[Hardware / Vendor Protocol Adapter]
+        Port -.->|Database| DbAdapter[Database Repository Adapter]
     end
 ```
 
